@@ -1,0 +1,113 @@
+name: Setup BoxLang CLI
+description: Sets up BoxLang for GitHub Actions
+
+branding:
+  icon: terminal
+  color: green
+
+inputs:
+  modules:
+    description: "Space-delimited list of modules to install"
+    required: false
+    default: ""
+  version:
+    description: "BoxLang version to install"
+    required: false
+    default: 'latest'
+  skip-package-install:
+    description: "Skip installation of system packages (curl, zip, unzip, jq, openjdk-21-jre)"
+    required: false
+    default: 'false'
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      id: install
+      run: |
+        set -euo pipefail  # Exit on error, undefined vars, pipe failures
+
+        # Install required system packages (unless skipped)
+        if [[ "${{ inputs.skip-package-install }}" != "true" ]]; then
+          echo "Installing required system packages..."
+          if command -v apt-get &> /dev/null; then
+            # Ubuntu/Debian
+            sudo apt-get update
+            sudo apt-get install -y curl zip unzip jq openjdk-21-jre
+          elif command -v yum &> /dev/null; then
+            # RHEL/CentOS/Amazon Linux
+            sudo yum install -y curl zip unzip jq java-21-openjdk
+          elif command -v dnf &> /dev/null; then
+            # Fedora
+            sudo dnf install -y curl zip unzip jq java-21-openjdk
+          elif command -v brew &> /dev/null; then
+            # macOS
+            brew install curl zip unzip jq openjdk@21
+          else
+            echo "Warning: Could not detect package manager. Assuming packages are already installed."
+          fi
+        else
+          echo "Skipping system package installation as requested"
+        fi
+
+        # Download the shell installer with error checking
+        echo "Downloading BoxLang installer..."
+        if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang/install-boxlang.sh -o install-boxlang.sh; then
+          echo "Failed to download BoxLang installer"
+          exit 1
+        fi
+
+        # Verify the script was downloaded
+        if [[ ! -f install-boxlang.sh ]]; then
+          echo "Installer script not found"
+          exit 1
+        fi
+
+        # Make the script executable
+        chmod +x install-boxlang.sh
+
+        # Call it with the right version from the input above
+        echo "Installing BoxLang version: ${{ inputs.version }}"
+        if ! ./install-boxlang.sh ${{ inputs.version }}; then
+          echo "BoxLang installation failed"
+          exit 1
+        fi
+
+        # Install global dependencies
+        INSTALL_MODULES="${{ inputs.modules }}"
+        if [[ -n "$INSTALL_MODULES" ]]; then
+          echo "Installing modules: $INSTALL_MODULES"
+          if ! install-bx-module $INSTALL_MODULES; then
+            echo "Module installation failed"
+            exit 1
+          fi
+          echo "Modules installed successfully"
+        fi
+
+        # Verify installation and show version
+        echo "Verifying BoxLang installation..."
+        if ! boxlang --version; then
+          echo "BoxLang installation verification failed"
+          exit 1
+        fi
+
+        # Capture version and installation path for outputs
+        BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")
+        BOXLANG_PATH=$(which boxlang || echo "unknown")
+
+        # Set outputs
+        echo "version=$BOXLANG_VERSION" >> $GITHUB_OUTPUT
+        echo "path=$BOXLANG_PATH" >> $GITHUB_OUTPUT
+
+        # Clean up installer script
+        rm -f install-boxlang.sh
+
+        echo "BoxLang setup completed successfully"
+
+outputs:
+  boxlang-version:
+    description: "The version of BoxLang that was installed"
+    value: ${{ steps.install.outputs.version }}
+  installation-path:
+    description: "The path where BoxLang was installed"
+    value: ${{ steps.install.outputs.path }}

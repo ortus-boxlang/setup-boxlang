@@ -1,0 +1,127 @@
+on: [push, pull_request]
+
+jobs:
+  smoke_test:
+    runs-on: ubuntu-latest
+    name: BoxLang Vanilla
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run local action
+        uses: ./
+
+      - name: Output installed BoxLang version
+        run: boxlang --version
+
+  test_with_version:
+    runs-on: ubuntu-latest
+    name: BoxLang with Specific Version
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run with Specific Version
+        uses: ./
+        with:
+          version: "1.1.0"
+
+      - name: Show Version
+        run: boxlang --version
+
+  test_with_modules:
+    runs-on: ubuntu-latest
+    name: BoxLang with Modules
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run with modules
+        uses: ./
+        with:
+          modules: "bx-mail bx-compat-cfml"
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+  test_skip_packages:
+    runs-on: ubuntu-latest
+    name: BoxLang Skip Package Installation
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Pre-install packages manually
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl zip unzip jq openjdk-21-jre
+
+      - name: Run with skip package install
+        uses: ./
+        with:
+          skip-package-install: true
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+  test_latest_version:
+    runs-on: ubuntu-latest
+    name: BoxLang Latest Version
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run with latest version (explicit)
+        uses: ./
+        with:
+          version: "latest"
+
+      - name: Show Version
+        run: boxlang --version
+
+  test_snapshot_version:
+    runs-on: ubuntu-latest
+    name: BoxLang Snapshot Version
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run with snapshot version
+        uses: ./
+        with:
+          version: "snapshot"
+
+      - name: Show Version
+        run: boxlang --version
+
+  test_multiple_os:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: BoxLang on ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run local action
+        uses: ./
+
+      - name: Verify installation
+        run: boxlang --version
+
+  test_outputs:
+    runs-on: ubuntu-latest
+    name: Test Action Outputs
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run local action
+        id: setup-boxlang
+        uses: ./
+
+      - name: Display outputs
+        run: |
+          echo "BoxLang Version: ${{ steps.setup-boxlang.outputs.boxlang-version }}"
+          echo "Installation Path: ${{ steps.setup-boxlang.outputs.installation-path }}"

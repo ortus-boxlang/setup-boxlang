@@ -47,7 +47,7 @@ runs:
 
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! ./install-boxlang.sh ${{ inputs.version }}; then
+        if ! sudo ./install-boxlang.sh ${{ inputs.version }}; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"
@@ -86,7 +86,6 @@ runs:
 
         # Clean up
         rm -f install-boxlang.sh
-
         echo "BoxLang setup completed successfully"
 
 outputs:

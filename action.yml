@@ -15,7 +15,7 @@ inputs:
     required: false
     default: 'latest'
   skip-package-install:
-    description: "Skip installation of system packages (curl, zip, unzip, jq, openjdk-21-jre)"
+    description: "Skip installation of auxiliary system packages (curl, zip, unzip, jq) and Java setup"
     required: false
     default: 'false'
 
@@ -27,54 +27,58 @@ runs:
       run: |
         set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
-        # Set TERM to avoid tput errors
+        # Ensure TERM is set to avoid tput errors
         export TERM=${TERM:-xterm}
 
-        # Install required system packages (unless skipped)
+        # Install auxiliary system packages (curl, zip, unzip, jq) if not skipped
         if [[ "${{ inputs.skip-package-install }}" != "true" ]]; then
-          echo "Installing required system packages..."
+          echo "Installing required system packages (curl, zip, unzip, jq)..."
           if command -v apt-get &> /dev/null; then
-            # Ubuntu/Debian
+            # Ubuntu / Debian
             sudo apt-get update
-            sudo apt-get install -y curl zip unzip jq openjdk-21-jre
-            # Set JAVA_HOME for Ubuntu/Debian
-            export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
+            sudo apt-get install -y curl zip unzip jq
           elif command -v yum &> /dev/null; then
-            # RHEL/CentOS/Amazon Linux
-            sudo yum install -y curl zip unzip jq java-21-openjdk
-            # Set JAVA_HOME for RHEL/CentOS
-            export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+            # RHEL / CentOS / Amazon Linux
+            sudo yum install -y curl zip unzip jq
           elif command -v dnf &> /dev/null; then
             # Fedora
-            sudo dnf install -y curl zip unzip jq java-21-openjdk
-            # Set JAVA_HOME for Fedora
-            export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+            sudo dnf install -y curl zip unzip jq
           elif command -v brew &> /dev/null; then
             # macOS
-            brew install curl zip unzip jq openjdk@21
-            # Set JAVA_HOME for macOS
-            export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo "/opt/homebrew/opt/openjdk@21")
+            brew install curl zip unzip jq
           else
-            echo "Warning: Could not detect package manager. Assuming packages are already installed."
+            echo "Warning: Could not detect package manager. Assuming curl, zip, unzip, jq are already installed."
           fi
+        else
+          echo "Skipping installation of auxiliary system packages as requested"
+        fi
 
-          # Verify Java installation
+    - name: Set up Temurin JDK 21
+      if: ${{ inputs.skip-package-install == 'false' }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        cache: 'none'
+
+    - shell: bash
+      id: install-boxlang
+      run: |
+        # Verify Java installation if not skipped
+        if [[ "${{ inputs.skip-package-install }}" != "true" ]]; then
           echo "Verifying Java installation..."
           java -version
           echo "JAVA_HOME: $JAVA_HOME"
-
-        else
-          echo "Skipping system package installation as requested"
         fi
 
-        # Download the shell installer with error checking
+        # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang/install-boxlang.sh -o install-boxlang.sh; then
           echo "Failed to download BoxLang installer"
           exit 1
         fi
 
-        # Verify the script was downloaded
+        # Verify the installer script exists
         if [[ ! -f install-boxlang.sh ]]; then
           echo "Installer script not found"
           exit 1
@@ -83,21 +87,8 @@ runs:
         # Make the script executable
         chmod +x install-boxlang.sh
 
-        # Call it with the right version from the input above
+        # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-
-        # Ensure JAVA_HOME is set if not already
-        if [[ -z "${JAVA_HOME:-}" ]]; then
-          if command -v java &> /dev/null; then
-            export JAVA_HOME=$(readlink -f $(which java) | sed "s:bin/java::")
-            echo "Auto-detected JAVA_HOME: $JAVA_HOME"
-          fi
-        fi
-
-        # Export environment for the installer
-        export JAVA_HOME
-        export PATH="$PATH:$JAVA_HOME/bin"
-
         if ! ./install-boxlang.sh ${{ inputs.version }}; then
           echo "BoxLang installation failed"
           echo "Java version:"
@@ -106,7 +97,7 @@ runs:
           exit 1
         fi
 
-        # Install global dependencies
+        # Install any BoxLang modules requested
         INSTALL_MODULES="${{ inputs.modules }}"
         if [[ -n "$INSTALL_MODULES" ]]; then
           echo "Installing modules: $INSTALL_MODULES"
@@ -117,17 +108,17 @@ runs:
           echo "Modules installed successfully"
         fi
 
-        # Verify installation and show version
+        # Verify BoxLang is on the PATH and show version
         echo "Verifying BoxLang installation..."
         if ! boxlang --version; then
           echo "BoxLang installation verification failed"
           exit 1
         fi
 
-        # Create the BOXLANG_HOME that points to the user ~/.boxlang directory
+        # Export BOXLANG_HOME to environment
         echo "BOXLANG_HOME=$HOME/.boxlang" >> $GITHUB_ENV
 
-        # Capture version and installation path for outputs
+        # Capture version and installation path
         BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")
         BOXLANG_PATH=$(which boxlang || echo "unknown")
 
@@ -135,7 +126,7 @@ runs:
         echo "version=$BOXLANG_VERSION" >> $GITHUB_OUTPUT
         echo "path=$BOXLANG_PATH" >> $GITHUB_OUTPUT
 
-        # Clean up installer script
+        # Clean up
         rm -f install-boxlang.sh
 
         echo "BoxLang setup completed successfully"
@@ -143,7 +134,7 @@ runs:
 outputs:
   boxlang-version:
     description: "The version of BoxLang that was installed"
-    value: ${{ steps.install.outputs.version }}
+    value: ${{ steps.install-boxlang.outputs.version }}
   installation-path:
     description: "The path where BoxLang was installed"
-    value: ${{ steps.install.outputs.path }}
+    value: ${{ steps.install-boxlang.outputs.path }}

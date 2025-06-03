@@ -22,36 +22,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - shell: bash
-      id: install
-      run: |
-        set -euo pipefail  # Exit on error, undefined vars, pipe failures
-
-        # Ensure TERM is set to avoid tput errors
-        export TERM=${TERM:-xterm}
-
-        # Install auxiliary system packages (curl, zip, unzip, jq) if not skipped
-        if [[ "${{ inputs.skip-package-install }}" != "true" ]]; then
-          echo "Installing required system packages (curl, zip, unzip, jq)..."
-          if command -v apt-get &> /dev/null; then
-            # Ubuntu / Debian
-            sudo apt-get update
-            sudo apt-get install -y curl zip unzip jq
-          elif command -v yum &> /dev/null; then
-            # RHEL / CentOS / Amazon Linux
-            sudo yum install -y curl zip unzip jq
-          elif command -v dnf &> /dev/null; then
-            # Fedora
-            sudo dnf install -y curl zip unzip jq
-          elif command -v brew &> /dev/null; then
-            # macOS
-            brew install curl zip unzip jq
-          else
-            echo "Warning: Could not detect package manager. Assuming curl, zip, unzip, jq are already installed."
-          fi
-        else
-          echo "Skipping installation of auxiliary system packages as requested"
-        fi
 
     - name: Set up Temurin JDK 21
       if: ${{ inputs.skip-package-install == 'false' }}
@@ -61,7 +31,8 @@ runs:
         java-version: '21'
         cache: 'none'
 
-    - shell: bash
+    - name: Setup BoxLang ${{ inputs.version }}
+      shell: bash
       id: install-boxlang
       run: |
         # Verify Java installation if not skipped

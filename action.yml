@@ -14,34 +14,21 @@ inputs:
     description: "BoxLang version to install"
     required: false
     default: 'latest'
-  skip-package-install:
-    description: "Skip installation of auxiliary system packages (curl, zip, unzip, jq) and Java setup"
-    required: false
-    default: 'false'
 
 runs:
   using: "composite"
   steps:
 
     - name: Set up Temurin JDK 21
-      if: ${{ inputs.skip-package-install == 'false' }}
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-        cache: 'none'
 
     - name: Setup BoxLang ${{ inputs.version }}
       shell: bash
       id: install-boxlang
       run: |
-        # Verify Java installation if not skipped
-        if [[ "${{ inputs.skip-package-install }}" != "true" ]]; then
-          echo "Verifying Java installation..."
-          java -version
-          echo "JAVA_HOME: $JAVA_HOME"
-        fi
-
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang/install-boxlang.sh -o install-boxlang.sh; then

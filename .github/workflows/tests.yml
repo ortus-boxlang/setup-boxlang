@@ -125,3 +125,21 @@ jobs:
         run: |
           echo "BoxLang Version: ${{ steps.setup-boxlang.outputs.boxlang-version }}"
           echo "Installation Path: ${{ steps.setup-boxlang.outputs.installation-path }}"
+
+    test_with_commandbox:
+      runs-on: ubuntu-latest
+      name: BoxLang with CommandBox
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+
+        - name: Run with CommandBox
+          uses: ./
+          with:
+            with-commandbox: true
+
+        - name: Verify BoxLang installation
+          run: boxlang --version
+
+        - name: Verify CommandBox installation
+          run: box --version

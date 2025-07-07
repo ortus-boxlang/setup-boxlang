@@ -126,7 +126,7 @@ jobs:
           echo "BoxLang Version: ${{ steps.setup-boxlang.outputs.boxlang-version }}"
           echo "Installation Path: ${{ steps.setup-boxlang.outputs.installation-path }}"
 
-    test_with_commandbox:
+  test_with_commandbox:
       runs-on: ubuntu-latest
       name: BoxLang with CommandBox
       steps:

@@ -142,4 +142,4 @@ jobs:
           run: boxlang --version
 
         - name: Verify CommandBox installation
-          run: box --version
+          run: box version

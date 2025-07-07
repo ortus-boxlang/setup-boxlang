@@ -6,6 +6,10 @@ branding:
   color: green
 
 inputs:
+  with-commandbox:
+    description: "Whether to install with CommandBox (default: false)"
+    required: false
+    default: 'false'
   modules:
     description: "Space-delimited list of modules to install"
     required: false
@@ -45,9 +49,18 @@ runs:
         # Make the script executable
         chmod +x install-boxlang.sh
 
+        # Check if CommandBox is requested
+        if [[ "${{ inputs.with-commandbox }}" == "true" ]]; then
+          echo "Installing BoxLang with CommandBox"
+          COMMAND_BOX_OPTION="--with-commandbox"
+        else
+          echo "Installing BoxLang without CommandBox"
+          COMMAND_BOX_OPTION="--without-commandbox"
+        fi
+
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }}; then
+        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} $COMMAND_BOX_OPTION; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"

@@ -37,7 +37,7 @@ runs:
       run: |
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
-        if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then
+        if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/snapshot/install-boxlang.sh -o install-boxlang.sh; then
           echo "Failed to download BoxLang installer"
           exit 1
         fi
@@ -103,10 +103,6 @@ runs:
 
         # Check if BOXLANG_INSTALL_HOME is set up and source it if needed
         echo "BoxLang Home: ${BOXLANG_INSTALL_HOME}"
-
-        # Output the contents of the install-bx-module.sh
-        ls -lR $BOXLANG_INSTALL_HOME
-        cat $BOXLANG_INSTALL_HOME/scripts/install-bx-module.sh
 
         # Install any BoxLang modules requested
         INSTALL_MODULES="${{ inputs.modules }}"

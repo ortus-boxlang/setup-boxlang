@@ -101,8 +101,12 @@ runs:
         # Source the shell to load PATH and environment variables
         source ~/.bashrc 2>/dev/null || source ~/.bash_profile 2>/dev/null || source ~/.profile 2>/dev/null || true
 
-        # Check if BOXLANG_HOME is set up and source it if needed
-        echo "BoxLang Home: ${BOXLANG_HOME}"
+        # Check if BOXLANG_INSTALL_HOME is set up and source it if needed
+        echo "BoxLang Home: ${BOXLANG_INSTALL_HOME}"
+
+        # Output the contents of the install-bx-module.sh
+        ls -lR $BOXLANG_INSTALL_HOME
+        cat $BOXLANG_INSTALL_HOME/scripts/install-bx-module.sh
 
         # Install any BoxLang modules requested
         INSTALL_MODULES="${{ inputs.modules }}"

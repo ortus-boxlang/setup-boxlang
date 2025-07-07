@@ -32,6 +32,8 @@ runs:
     - name: Setup BoxLang ${{ inputs.version }}
       shell: bash
       id: install-boxlang
+      env:
+        TERM: xterm-256color
       run: |
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
@@ -52,7 +54,7 @@ runs:
         # Check if CommandBox is requested
         if [[ "${{ inputs.with-commandbox }}" == "true" ]]; then
           echo "Installing BoxLang with CommandBox"
-          COMMAND_BOX_OPTION="--with-commandbox"
+          COMMAND_BOX_OPTION="--with-commandbox"˝
         else
           echo "Installing BoxLang without CommandBox"
           COMMAND_BOX_OPTION="--without-commandbox"

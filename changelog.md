@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The new location of the installer.
+- The new location of the installer as we have now moved to a new repository.
 
 ----
 

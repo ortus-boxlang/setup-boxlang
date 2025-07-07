@@ -37,7 +37,7 @@ runs:
       run: |
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
-        if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/snapshot/install-boxlang.sh -o install-boxlang.sh; then
+        if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then
           echo "Failed to download BoxLang installer"
           exit 1
         fi

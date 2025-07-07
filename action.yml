@@ -98,9 +98,11 @@ runs:
       env:
         TERM: xterm-256color
       run: |
-        cat ~/.bash_profile
-        # Check if BOXLANG_INSTALL_HOME is set up and source it if needed
-        echo "Boxlang Install Home ${BOXLANG_INSTALL_HOME}"
+        # Source the shell to load PATH and environment variables
+        source ~/.bashrc 2>/dev/null || source ~/.bash_profile 2>/dev/null || source ~/.profile 2>/dev/null || true
+
+        # Check if BOXLANG_HOME is set up and source it if needed
+        echo "BoxLang Home: ${BOXLANG_HOME}"
 
         # Install any BoxLang modules requested
         INSTALL_MODULES="${{ inputs.modules }}"

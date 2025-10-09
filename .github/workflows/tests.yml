@@ -131,7 +131,7 @@ jobs:
     name: BoxLang with CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run with CommandBox
         uses: ./
@@ -149,7 +149,7 @@ jobs:
     name: BoxLang with specific CommandBox version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run with CommandBox specific version
         uses: ./
@@ -168,7 +168,7 @@ jobs:
     name: BoxLang with CommandBox modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run with CommandBox and modules
         uses: ./
@@ -183,14 +183,14 @@ jobs:
         run: box version
 
       - name: Verify CommandBox modules
-        run: box list
+        run: box list --system
 
   test_with_forgebox_api_key:
     runs-on: ubuntu-latest
     name: BoxLang with ForgeBox API Key
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run with CommandBox and ForgeBox API Key
         uses: ./

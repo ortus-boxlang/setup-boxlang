@@ -184,3 +184,25 @@ jobs:
 
       - name: Verify CommandBox modules
         run: box list
+
+  test_with_forgebox_api_key:
+    runs-on: ubuntu-latest
+    name: BoxLang with ForgeBox API Key
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run with CommandBox and ForgeBox API Key
+        uses: ./
+        with:
+          with-commandbox: true
+          forgeboxAPIKey: "test-api-key"
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify CommandBox installation
+        run: box version
+
+      - name: Verify ForgeBox API Key is configured
+        run: box config show endpoints.forgebox.APIToken

@@ -18,6 +18,10 @@ inputs:
     description: "Comma-delimited list of CommandBox packages to install"
     required: false
     default: ""
+  forgeboxAPIKey:
+    description: "ForgeBox API Key"
+    required: false
+    default: ''
   modules:
     description: "Space-delimited list of modules to install"
     required: false
@@ -148,6 +152,18 @@ runs:
           exit 1
         fi
         echo "CommandBox modules installed successfully"
+
+    - name: Configure ForgeBox API Key
+      if: ${{ inputs.with-commandbox == 'true' && inputs.forgeboxAPIKey != '' }}
+      shell: bash
+      run: |
+        # Configure ForgeBox API Key
+        echo "Setting up ForgeBox API Key..."
+        if ! box config set endpoints.forgebox.APIToken=${{ inputs.forgeboxAPIKey }}; then
+          echo "Failed to configure ForgeBox API Key"
+          exit 1
+        fi
+        echo "ForgeBox API Key configured successfully"
 
 outputs:
   boxlang-version:

@@ -11,6 +11,7 @@ The following are all the different input variables you can use on the action so
 | `with-commandbox` | boolean       | `false`       | If true, it will install the latest CommandBox as well. |
 | `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
 | `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
+| `forgeboxAPIKey` | string       | ---           | If added, it will configure the ForgeBox API Key in CommandBox. Only used if `with-commandbox` is true. |
 | `modules`              | string        | ---           | If added, a space-delimited list of modules to install upon installation of the binary for you. |
 | `version`                | semver        | `latest`      | The BoxLang version to install, if not passed we use the latest stable. |
 
@@ -79,6 +80,16 @@ Install BoxLang with CommandBox (specific version) and modules:
     with-commandbox: true
     commandbox_version: 6.0.0
     commandbox_modules: commandbox-cfconfig,commandbox-dotenv,commandbox-fusionreactor
+```
+
+Install BoxLang with CommandBox and ForgeBox API Key:
+
+```yaml
+- name: Setup BoxLang with CommandBox and ForgeBox API Key
+  uses: ortus-boxlang/setup-boxlang@1.1.0
+  with:
+    with-commandbox: true
+    forgeboxAPIKey: ${{ secrets.FORGEBOX_API_KEY }}
 ```
 
 Here is another one:

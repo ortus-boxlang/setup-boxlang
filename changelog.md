@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New inputs: `commandbox_version` and `commandbox_modules` to specify the version of CommandBox and any modules to install.
+- New input: `forgeboxAPIKey` to configure the ForgeBox API Key in CommandBox for authenticated package access.
 
 ----
 

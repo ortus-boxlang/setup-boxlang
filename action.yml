@@ -59,18 +59,9 @@ runs:
         # Make the script executable
         chmod +x install-boxlang.sh
 
-        # Check if CommandBox is requested
-        if [[ "${{ inputs.with-commandbox }}" == "true" ]]; then
-          echo "Installing BoxLang (CommandBox will be installed separately)"
-          COMMAND_BOX_OPTION="--without-commandbox"
-        else
-          echo "Installing BoxLang without CommandBox"
-          COMMAND_BOX_OPTION="--without-commandbox"
-        fi
-
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} $COMMAND_BOX_OPTION; then
+        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"

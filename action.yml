@@ -132,6 +132,9 @@ runs:
         # Unzip and Install
         sudo unzip box.zip -d /usr/local/bin/ && rm -v box.zip
 
+        # Make CommandBox executable
+        sudo chmod +x /usr/local/bin/box
+
         # Verify CommandBox installation
         echo "Verifying CommandBox installation..."
         if ! box version; then

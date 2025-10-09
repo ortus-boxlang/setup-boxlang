@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-10-09
+
 ### Added
 
 - New inputs: `commandbox_version` and `commandbox_modules` to specify the version of CommandBox and any modules to install.

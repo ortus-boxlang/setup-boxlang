@@ -9,6 +9,8 @@ The following are all the different input variables you can use on the action so
 | Input                    | Type          | Default       | Description |
 | ------------------------ | ------------- | ------------- | ----------- |
 | `with-commandbox` | boolean       | `false`       | If true, it will install the latest CommandBox as well. |
+| `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
+| `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
 | `modules`              | string        | ---           | If added, a space-delimited list of modules to install upon installation of the binary for you. |
 | `version`                | semver        | `latest`      | The BoxLang version to install, if not passed we use the latest stable. |
 
@@ -46,6 +48,37 @@ Install BoxLang with CommandBox:
   uses: ortus-boxlang/setup-boxlang@1.1.0
     with:
         with-commandbox: true
+```
+
+Install BoxLang with a specific CommandBox version:
+
+```yaml
+- name: Setup BoxLang with specific CommandBox version
+  uses: ortus-boxlang/setup-boxlang@1.1.0
+  with:
+    with-commandbox: true
+    commandbox_version: 6.0.0
+```
+
+Install BoxLang with CommandBox and modules:
+
+```yaml
+- name: Setup BoxLang with CommandBox and modules
+  uses: ortus-boxlang/setup-boxlang@1.1.0
+  with:
+    with-commandbox: true
+    commandbox_modules: commandbox-cfconfig,commandbox-dotenv
+```
+
+Install BoxLang with CommandBox (specific version) and modules:
+
+```yaml
+- name: Setup BoxLang with CommandBox (full setup)
+  uses: ortus-boxlang/setup-boxlang@1.1.0
+  with:
+    with-commandbox: true
+    commandbox_version: 6.0.0
+    commandbox_modules: commandbox-cfconfig,commandbox-dotenv,commandbox-fusionreactor
 ```
 
 Here is another one:

@@ -10,6 +10,14 @@ inputs:
     description: "Whether to install with CommandBox (default: false)"
     required: false
     default: 'false'
+  commandbox_version:
+    description: "CommandBox version to install (default: latest)"
+    required: false
+    default: 'latest'
+  commandbox_modules:
+    description: "Comma-delimited list of CommandBox packages to install"
+    required: false
+    default: ""
   modules:
     description: "Space-delimited list of modules to install"
     required: false
@@ -51,18 +59,9 @@ runs:
         # Make the script executable
         chmod +x install-boxlang.sh
 
-        # Check if CommandBox is requested
-        if [[ "${{ inputs.with-commandbox }}" == "true" ]]; then
-          echo "Installing BoxLang with CommandBox"
-          COMMAND_BOX_OPTION="--with-commandbox"
-        else
-          echo "Installing BoxLang without CommandBox"
-          COMMAND_BOX_OPTION="--without-commandbox"
-        fi
-
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} $COMMAND_BOX_OPTION; then
+        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"
@@ -112,6 +111,43 @@ runs:
           exit 1
         fi
         echo "Modules installed successfully"
+
+    - name: Install CommandBox
+      if: ${{ inputs.with-commandbox == 'true' }}
+      shell: bash
+      run: |
+        # Latest Stable or Specific Version
+        if [[ "${{ inputs.commandbox_version }}" == "latest" ]] ; then
+          echo "Installing Latest Stable CommandBox"
+          curl -SL -o box.zip https://www.ortussolutions.com/parent/download/commandbox/type/bin
+        else
+          echo "Installing CommandBox v${{ inputs.commandbox_version }}"
+          curl -SL -o box.zip https://downloads.ortussolutions.com/ortussolutions/commandbox/${{ inputs.commandbox_version }}/commandbox-bin-${{ inputs.commandbox_version }}.zip
+        fi
+
+        # Unzip and Install
+        sudo unzip box.zip -d /usr/local/bin/ && rm -v box.zip
+
+        # Verify CommandBox installation
+        echo "Verifying CommandBox installation..."
+        if ! box version; then
+          echo "CommandBox installation verification failed"
+          exit 1
+        fi
+        echo "CommandBox setup completed successfully"
+
+    - name: Install CommandBox modules
+      if: ${{ inputs.with-commandbox == 'true' && inputs.commandbox_modules != '' }}
+      shell: bash
+      run: |
+        # Install CommandBox packages
+        INSTALL_MODULES="${{ inputs.commandbox_modules }}"
+        echo "Installing CommandBox modules: $INSTALL_MODULES"
+        if ! box install $INSTALL_MODULES; then
+          echo "CommandBox module installation failed"
+          exit 1
+        fi
+        echo "CommandBox modules installed successfully"
 
 outputs:
   boxlang-version:

@@ -1,5 +1,8 @@
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   smoke_test:
     runs-on: ubuntu-latest

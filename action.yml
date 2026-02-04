@@ -6,6 +6,10 @@ branding:
   color: green
 
 inputs:
+  boxlang-home:
+    description: "Custom directory for BoxLang installation (default: ${GITHUB_WORKSPACE}/.boxlang)"
+    required: false
+    default: ''
   with-commandbox:
     description: "Whether to install with CommandBox (default: false)"
     required: false
@@ -47,6 +51,20 @@ runs:
       env:
         TERM: xterm-256color
       run: |
+        # Set BOXLANG_HOME to a writable location
+        if [[ -n "${{ inputs.boxlang-home }}" ]]; then
+          BOXLANG_HOME_DIR="${{ inputs.boxlang-home }}"
+        else
+          BOXLANG_HOME_DIR="${GITHUB_WORKSPACE}/.boxlang"
+        fi
+
+        # Create it if it doesn't exist
+        mkdir -p "$BOXLANG_HOME_DIR"
+
+        echo "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
+        echo "BOXLANG_HOME=$BOXLANG_HOME_DIR" >> $GITHUB_ENV
+        export BOXLANG_HOME="$BOXLANG_HOME_DIR"
+
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then
@@ -65,7 +83,7 @@ runs:
 
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
+        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" BOXLANG_HOME="$BOXLANG_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"
@@ -80,8 +98,10 @@ runs:
           exit 1
         fi
 
-        # Export BOXLANG_HOME to environment
-        echo "BOXLANG_HOME=$HOME/.boxlang" >> $GITHUB_ENV
+        # Fix ownership of BOXLANG_HOME after sudo installation
+        # This ensures module installation (which runs without sudo) can write to the directory
+        echo "Fixing ownership of BOXLANG_HOME..."
+        sudo chown -R $(whoami):$(whoami) "$BOXLANG_HOME_DIR" || true
 
         # Capture version and installation path
         BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")
@@ -105,7 +125,7 @@ runs:
         export BOXLANG_INSTALL_HOME=/usr/local/boxlang
 
         # Check if BOXLANG_INSTALL_HOME is set up and source it if needed
-        echo "BoxLang Home: ${BOXLANG_INSTALL_HOME}"
+        echo "BoxLang Home: ${BOXLANG_HOME}"
 
         # Install any BoxLang modules requested
         INSTALL_MODULES="${{ inputs.modules }}"

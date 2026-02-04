@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New input: `boxlang-home` to allow users to customize the BoxLang installation directory. Defaults to `${GITHUB_WORKSPACE}/.boxlang` to avoid read-only filesystem issues with `/home/runner` on GitHub Actions.
+
+### Changed
+
+- BOXLANG_HOME environment variable is now set before installation to ensure BoxLang installs to a writable location. This resolves issues with GitHub Actions runners where `/home/runner` is read-only.
+
+### Security
+
+- Added explicit `permissions: contents: read` to test workflow to follow the principle of least privilege and address CodeQL security alerts.
+
 ## [1.2.0] - 2025-10-09
 
 ### Added

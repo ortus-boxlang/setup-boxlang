@@ -1,12 +1,16 @@
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   smoke_test:
     runs-on: ubuntu-latest
     name: BoxLang Vanilla
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run local action
         uses: ./
@@ -19,7 +23,7 @@ jobs:
     name: BoxLang with Specific Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with Specific Version
         uses: ./
@@ -34,7 +38,7 @@ jobs:
     name: BoxLang with Modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with modules
         uses: ./
@@ -49,7 +53,7 @@ jobs:
     name: BoxLang Skip Package Installation
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Pre-install packages manually
         run: |
@@ -69,7 +73,7 @@ jobs:
     name: BoxLang Latest Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with latest version (explicit)
         uses: ./
@@ -84,7 +88,7 @@ jobs:
     name: BoxLang Snapshot Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with snapshot version
         uses: ./
@@ -102,7 +106,7 @@ jobs:
     name: BoxLang on ${{ matrix.os }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run local action
         uses: ./
@@ -115,7 +119,7 @@ jobs:
     name: Test Action Outputs
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run local action
         id: setup-boxlang
@@ -131,7 +135,7 @@ jobs:
     name: BoxLang with CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with CommandBox
         uses: ./
@@ -149,7 +153,7 @@ jobs:
     name: BoxLang with specific CommandBox version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with CommandBox specific version
         uses: ./
@@ -168,7 +172,7 @@ jobs:
     name: BoxLang with CommandBox modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with CommandBox and modules
         uses: ./
@@ -190,7 +194,7 @@ jobs:
     name: BoxLang with ForgeBox API Key
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run with CommandBox and ForgeBox API Key
         uses: ./
@@ -206,3 +210,68 @@ jobs:
 
       - name: Verify ForgeBox API Key is configured
         run: box config show endpoints.forgebox.APIToken
+
+  test_custom_boxlang_home:
+    runs-on: ubuntu-latest
+    name: BoxLang with Custom Home Directory
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run with custom boxlang-home
+        uses: ./
+        with:
+          boxlang-home: /tmp/custom-boxlang
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify BOXLANG_HOME is set correctly
+        run: |
+          echo "BOXLANG_HOME: $BOXLANG_HOME"
+          if [[ "$BOXLANG_HOME" != "/tmp/custom-boxlang" ]]; then
+            echo "BOXLANG_HOME is not set to the expected value"
+            exit 1
+          fi
+
+      - name: Verify installation directory exists
+        run: |
+          if [[ ! -d "/tmp/custom-boxlang" ]]; then
+            echo "Custom BoxLang home directory does not exist"
+            exit 1
+          fi
+          echo "Custom BoxLang home directory exists: /tmp/custom-boxlang"
+
+  test_default_boxlang_home:
+    runs-on: ubuntu-latest
+    name: BoxLang with Default Home Directory
+    permissions:
+        contents: read
+        pull-requests: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run without custom boxlang-home (should default to workspace)
+        uses: ./
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify BOXLANG_HOME is set to workspace
+        run: |
+          echo "BOXLANG_HOME: $BOXLANG_HOME"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          if [[ "$BOXLANG_HOME" != "$GITHUB_WORKSPACE/.boxlang" ]]; then
+            echo "BOXLANG_HOME is not set to the expected default value"
+            exit 1
+          fi
+          echo "BOXLANG_HOME is correctly set to workspace"
+
+      - name: Verify default installation directory exists
+        run: |
+          if [[ ! -d "$GITHUB_WORKSPACE/.boxlang" ]]; then
+            echo "Default BoxLang home directory does not exist"
+            exit 1
+          fi
+          echo "Default BoxLang home directory exists in workspace"

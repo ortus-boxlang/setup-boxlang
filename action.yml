@@ -119,6 +119,7 @@ runs:
         echo "BoxLang Home: ${BOXLANG_HOME}"
         ls -lR ${BOXLANG_HOME}
 
+        # Install BoxLang modules
         INSTALL_MODULES="${{ inputs.modules }}"
         echo "Installing modules: $INSTALL_MODULES"
         if ! install-bx-module $INSTALL_MODULES; then

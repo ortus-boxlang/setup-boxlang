@@ -60,6 +60,8 @@ runs:
 
         # Create it if it doesn't exist
         mkdir -p "$BOXLANG_HOME_DIR"
+        # Give all permissions to the folder and sub-folders
+        chmod -R 777 "$BOXLANG_HOME_DIR"
 
         echo "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
         echo "BOXLANG_HOME=$BOXLANG_HOME_DIR" >> $GITHUB_ENV

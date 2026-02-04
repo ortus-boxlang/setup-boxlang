@@ -6,6 +6,10 @@ branding:
   color: green
 
 inputs:
+  boxlang-home:
+    description: "Custom directory for BoxLang installation (default: ${GITHUB_WORKSPACE}/.boxlang)"
+    required: false
+    default: ''
   with-commandbox:
     description: "Whether to install with CommandBox (default: false)"
     required: false
@@ -47,6 +51,17 @@ runs:
       env:
         TERM: xterm-256color
       run: |
+        # Set BOXLANG_HOME to a writable location
+        if [[ -n "${{ inputs.boxlang-home }}" ]]; then
+          BOXLANG_HOME_DIR="${{ inputs.boxlang-home }}"
+        else
+          BOXLANG_HOME_DIR="${GITHUB_WORKSPACE}/.boxlang"
+        fi
+        
+        echo "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
+        echo "BOXLANG_HOME=$BOXLANG_HOME_DIR" >> $GITHUB_ENV
+        export BOXLANG_HOME="$BOXLANG_HOME_DIR"
+        
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then
@@ -65,7 +80,7 @@ runs:
 
         # Call installer with desired version
         echo "Installing BoxLang version: ${{ inputs.version }}"
-        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
+        if ! sudo -E PATH="$PATH" JAVA_HOME="$JAVA_HOME" BOXLANG_HOME="$BOXLANG_HOME" ./install-boxlang.sh ${{ inputs.version }} --without-commandbox; then
           echo "BoxLang installation failed"
           echo "Java version:"
           java -version || echo "Java not found"
@@ -79,9 +94,6 @@ runs:
           echo "BoxLang installation verification failed"
           exit 1
         fi
-
-        # Export BOXLANG_HOME to environment
-        echo "BOXLANG_HOME=$HOME/.boxlang" >> $GITHUB_ENV
 
         # Capture version and installation path
         BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")

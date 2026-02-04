@@ -11,6 +11,7 @@ Configure your BoxLang setup using these input parameters:
 
 | Input                    | Type          | Default       | Description |
 | ------------------------ | ------------- | ------------- | ----------- |
+| `boxlang-home` | string       | `${GITHUB_WORKSPACE}/.boxlang`       | Custom directory for BoxLang installation. Defaults to a writable directory in the workspace to avoid read-only filesystem issues. |
 | `with-commandbox` | boolean       | `false`       | If true, it will install the latest CommandBox as well. |
 | `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
 | `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
@@ -43,6 +44,15 @@ Configure your BoxLang setup using these input parameters:
   uses: ortus-boxlang/setup-boxlang@1.1.0
   with:
     version: snapshot
+```
+
+### 📁 Custom Installation Directory
+
+```yaml
+- name: Setup BoxLang with custom installation directory
+  uses: ortus-boxlang/setup-boxlang@1.1.0
+  with:
+    boxlang-home: /tmp/boxlang
 ```
 
 ### 📦 With CommandBox

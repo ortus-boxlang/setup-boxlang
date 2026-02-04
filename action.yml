@@ -100,6 +100,11 @@ runs:
           exit 1
         fi
 
+        # Fix ownership of BOXLANG_HOME after sudo installation
+        # This ensures module installation (which runs without sudo) can write to the directory
+        echo "Fixing ownership of BOXLANG_HOME..."
+        sudo chown -R $(whoami):$(whoami) "$BOXLANG_HOME_DIR" || true
+
         # Capture version and installation path
         BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")
         BOXLANG_PATH=$(which boxlang || echo "unknown")

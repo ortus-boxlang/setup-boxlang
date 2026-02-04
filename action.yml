@@ -57,11 +57,14 @@ runs:
         else
           BOXLANG_HOME_DIR="${GITHUB_WORKSPACE}/.boxlang"
         fi
-        
+
+        # Create it if it doesn't exist
+        mkdir -p "$BOXLANG_HOME_DIR"
+
         echo "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
         echo "BOXLANG_HOME=$BOXLANG_HOME_DIR" >> $GITHUB_ENV
         export BOXLANG_HOME="$BOXLANG_HOME_DIR"
-        
+
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then

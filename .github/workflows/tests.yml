@@ -2,6 +2,7 @@ on: [push, pull_request]
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   smoke_test:
@@ -244,6 +245,9 @@ jobs:
   test_default_boxlang_home:
     runs-on: ubuntu-latest
     name: BoxLang with Default Home Directory
+    permissions:
+        contents: read
+        pull-requests: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6

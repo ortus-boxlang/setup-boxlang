@@ -152,19 +152,12 @@ runs:
           exit 1
         }
 
-        # Build installer args. NOTE: --yes must come BEFORE --without-commandbox so that
-        # --without-commandbox (processed last) wins over the --yes flag that also sets INSTALL_COMMANDBOX=true.
+        # Always install BoxLang without CommandBox via the PS1 installer.
+        # CommandBox on Windows is handled by a separate dedicated step below.
         Write-Host "Installing BoxLang version: ${{ inputs.version }}"
         $env:BOXLANG_TARGET_VERSION = "${{ inputs.version }}"
-        if ("${{ inputs.with-commandbox }}" -eq "true") {
-          # Let the BoxLang installer handle CommandBox on Windows (uses the correct type/windows binary).
-          # Note: commandbox_version is ignored on Windows; the BoxLang installer always installs the latest.
-          $installerArgs = @("--yes", "--with-commandbox")
-        } else {
-          $installerArgs = @("--yes", "--without-commandbox")
-        }
         try {
-          & $tmpScript @installerArgs
+          & $tmpScript --yes --without-commandbox
           if ($LASTEXITCODE -ne 0) { throw "Installer exited with code $LASTEXITCODE" }
         } catch {
           Write-Host "BoxLang installation failed: $_"
@@ -191,17 +184,6 @@ runs:
           exit 1
         }
         Write-Host "BoxLang version: $version"
-
-        # Verify CommandBox if requested (installed by BoxLang installer above)
-        if ("${{ inputs.with-commandbox }}" -eq "true") {
-          Write-Host "Verifying CommandBox installation..."
-          $boxVersion = box version 2>&1
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "CommandBox installation verification failed"
-            exit 1
-          }
-          Write-Host "CommandBox version: $boxVersion"
-        }
 
         # Capture version and installation path for outputs
         $BOXLANG_VERSION = ($version | Select-String -Pattern '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' |
@@ -258,6 +240,47 @@ runs:
           exit 1
         fi
         echo "CommandBox setup completed successfully"
+
+    - name: Install CommandBox (Windows)
+      if: ${{ inputs.with-commandbox == 'true' && runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        $boxDir = "C:\ProgramData\CommandBox"
+        New-Item -ItemType Directory -Path $boxDir -Force | Out-Null
+
+        # Download the Windows CommandBox binary (exe wrapped in a zip)
+        if ("${{ inputs.commandbox_version }}" -eq "latest") {
+          Write-Host "Downloading latest CommandBox (Windows)..."
+          Invoke-WebRequest -Uri "https://www.ortussolutions.com/parent/download/commandbox/type/windows" `
+            -OutFile "$boxDir\box.zip" -UseBasicParsing -ErrorAction Stop
+        } else {
+          Write-Host "Downloading CommandBox v${{ inputs.commandbox_version }} (Windows)..."
+          Invoke-WebRequest -Uri "https://downloads.ortussolutions.com/ortussolutions/commandbox/${{ inputs.commandbox_version }}/commandbox-bin-${{ inputs.commandbox_version }}.zip" `
+            -OutFile "$boxDir\box.zip" -UseBasicParsing -ErrorAction Stop
+        }
+
+        # Extract and ensure box.exe is directly in $boxDir
+        Expand-Archive -Path "$boxDir\box.zip" -DestinationPath $boxDir -Force
+        Remove-Item "$boxDir\box.zip" -Force
+
+        # Some builds nest box.exe inside a subfolder — flatten it
+        $nested = Get-ChildItem -Path $boxDir -Recurse -Filter "box.exe" | Select-Object -First 1
+        if ($nested -and $nested.DirectoryName -ne $boxDir) {
+          Move-Item $nested.FullName $boxDir -Force
+        }
+
+        # Add $boxDir to PATH in this session AND for all subsequent steps
+        $env:PATH = "$boxDir;$env:PATH"
+        Add-Content -Path $env:GITHUB_ENV -Value "PATH=$env:PATH"
+
+        Write-Host "Verifying CommandBox installation..."
+        $boxVersion = & "$boxDir\box.exe" version 2>&1
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "CommandBox installation verification failed"
+          exit 1
+        }
+        Write-Host "CommandBox version: $boxVersion"
+        Write-Host "CommandBox setup completed successfully"
 
     - name: Install CommandBox modules
       if: ${{ inputs.with-commandbox == 'true' && inputs.commandbox_modules != '' && runner.os != 'Windows' }}

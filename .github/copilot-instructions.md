@@ -49,5 +49,12 @@ Welcome to the `setup-boxlang` GitHub Action codebase! This project provides a c
 - When updating installation logic, ensure error handling and output setting are robust.
 - Keep documentation in `README.md` and this file in sync with action behavior.
 
+## Skills
+Specialized agent skills for this repository live in `.agents/skills/`. Load the relevant skill before working on these areas:
+
+| Skill | Path | Use When |
+|-------|------|----------|
+| `github-action-authoring` | `.agents/skills/github-action-authoring/SKILL.md` | Adding platform support (Windows/Linux/macOS), fixing PATH issues on Windows runners, updating action inputs/outputs/steps, writing PowerShell steps, or adding CI test jobs. |
+
 ---
 For questions about BoxLang, see https://boxlang.io or the Ortus Solutions documentation.

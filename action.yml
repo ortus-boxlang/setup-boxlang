@@ -124,10 +124,11 @@ runs:
         TERM: xterm-256color
       run: |
         # Set BOXLANG_HOME to a writable location
+        # Use $env:GITHUB_WORKSPACE directly inside PowerShell (not ${{ env.GITHUB_WORKSPACE }})
         if ("${{ inputs.boxlang-home }}" -ne "") {
           $BOXLANG_HOME_DIR = "${{ inputs.boxlang-home }}"
         } else {
-          $BOXLANG_HOME_DIR = "${{ env.GITHUB_WORKSPACE }}\.boxlang"
+          $BOXLANG_HOME_DIR = "$env:GITHUB_WORKSPACE\.boxlang"
         }
 
         # Create it if it doesn't exist
@@ -139,40 +140,51 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "BOXLANG_HOME=$BOXLANG_HOME_DIR"
         $env:BOXLANG_HOME = $BOXLANG_HOME_DIR
 
-        # Download and execute the Windows PowerShell installer
+        # Download the Windows PowerShell installer to a temp file and execute it.
+        # We cannot use Invoke-Expression on .Content because in PS7+ .Content is a byte[].
         Write-Host "Downloading BoxLang Windows installer..."
+        $tmpScript = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "install-boxlang.ps1")
         try {
-          $installerUrl = "https://install-windows.boxlang.io"
-          $installerScript = Invoke-WebRequest -Uri $installerUrl -UseBasicParsing -ErrorAction Stop
-          Write-Host "Installing BoxLang version: ${{ inputs.version }}"
-
-          # Execute the installer script
-          Invoke-Expression $installerScript.Content
+          Invoke-WebRequest -Uri "https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.ps1" `
+            -OutFile $tmpScript -UseBasicParsing -ErrorAction Stop
         } catch {
-          Write-Host "Failed to download or execute BoxLang Windows installer: $_"
+          Write-Host "Failed to download BoxLang Windows installer: $_"
           exit 1
         }
+
+        # Pass version via environment variable (supported by the installer) and run non-interactively
+        Write-Host "Installing BoxLang version: ${{ inputs.version }}"
+        $env:BOXLANG_TARGET_VERSION = "${{ inputs.version }}"
+        try {
+          & $tmpScript --without-commandbox --yes
+          if ($LASTEXITCODE -ne 0) { throw "Installer exited with code $LASTEXITCODE" }
+        } catch {
+          Write-Host "BoxLang installation failed: $_"
+          exit 1
+        } finally {
+          Remove-Item $tmpScript -Force -ErrorAction SilentlyContinue
+        }
+
+        # Reload PATH so boxlang is available in this session
+        $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+                    [System.Environment]::GetEnvironmentVariable("PATH", "User")
+        Add-Content -Path $env:GITHUB_ENV -Value "PATH=$env:PATH"
 
         # Verify BoxLang is available and show version
         Write-Host "Verifying BoxLang installation..."
-        try {
-          $version = boxlang --version 2>&1
-          Write-Host "BoxLang version: $version"
-        } catch {
-          Write-Host "BoxLang installation verification failed: $_"
+        $version = boxlang --version 2>&1
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "BoxLang installation verification failed"
           exit 1
         }
+        Write-Host "BoxLang version: $version"
 
-        # Capture version and installation path
-        try {
-          $BOXLANG_VERSION = (boxlang --version | Select-String -Pattern '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' | ForEach-Object { $_.Matches[0].Value }) -or "unknown"
-          $BOXLANG_PATH = (Get-Command boxlang -ErrorAction SilentlyContinue).Source -or "unknown"
-        } catch {
-          $BOXLANG_VERSION = "unknown"
-          $BOXLANG_PATH = "unknown"
-        }
-
-        # Set outputs
+        # Capture version and installation path for outputs
+        $BOXLANG_VERSION = ($version | Select-String -Pattern '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' |
+          ForEach-Object { $_.Matches[0].Value } | Select-Object -First 1)
+        if (-not $BOXLANG_VERSION) { $BOXLANG_VERSION = "unknown" }
+        $BOXLANG_PATH = (Get-Command boxlang -ErrorAction SilentlyContinue).Source
+        if (-not $BOXLANG_PATH) { $BOXLANG_PATH = "unknown" }
         Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$BOXLANG_VERSION"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "path=$BOXLANG_PATH"
 

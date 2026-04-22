@@ -25,14 +25,14 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
 ```
 
 ### 📦 With BoxLang Modules
 
 ```yaml
 - name: Setup BoxLang
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     modules: bx-ai bx-orm bx-pdf
 ```
@@ -41,7 +41,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with specific version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     version: snapshot
 ```
@@ -50,7 +50,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with custom installation directory
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     boxlang-home: /tmp/boxlang
 ```
@@ -59,7 +59,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
     with:
         with-commandbox: true
 ```
@@ -68,7 +68,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with specific CommandBox version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_version: 6.0.0
@@ -78,7 +78,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox and modules
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_modules: commandbox-cfconfig,commandbox-dotenv
@@ -88,7 +88,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox (full setup)
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_version: 6.0.0
@@ -99,7 +99,7 @@ Install BoxLang with CommandBox and ForgeBox API Key:
 
 ```yaml
 - name: Setup BoxLang with CommandBox and ForgeBox API Key
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     forgeboxAPIKey: ${{ secrets.FORGEBOX_API_KEY }}
@@ -109,9 +109,9 @@ Here is another one:
 
 ```yaml
 - name: Setup BoxLang with specific version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
-    version: 1.1.0
+    version: main
 ```
 
 

@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ----
 
-## [Unreleased]
+## [1.4.0]
+
+----
+
+## [1.3.0] - 2025-02-04
 
 ### Added
 
@@ -20,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Added explicit `permissions: contents: read` to test workflow to follow the principle of least privilege and address CodeQL security alerts.
+
+----
 
 ## [1.2.0] - 2025-10-09
 

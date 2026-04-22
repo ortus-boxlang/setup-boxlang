@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ----
 
-## [Unreleased]
+## [1.4.0] - 2026-04-22
+
+### Added
+
+- **Windows support**: The action now works on `windows-latest` GitHub Actions runners in addition to Linux and macOS.
+
+### Changed
+
+- All existing installation steps renamed with `(Unix/Linux/macOS)` suffix and made conditional (`runner.os != 'Windows'`).
+- Action outputs now resolve correctly from the appropriate platform-specific step on both Windows and Unix runners.
+
+----
+
+## [1.3.0] - 2025-02-04
 
 ### Added
 
@@ -20,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Added explicit `permissions: contents: read` to test workflow to follow the principle of least privilege and address CodeQL security alerts.
+
+----
 
 ## [1.2.0] - 2025-10-09
 

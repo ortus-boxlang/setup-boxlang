@@ -2,8 +2,9 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/ortus-boxlang/setup-boxlang?color=blue)](https://github.com/ortus-boxlang/setup-boxlang/releases)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
+![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-brightgreen)
 
-🚀 **Automate your BoxLang setup** - This GitHub Action sets up the [BoxLang Dynamic JVM Language](https://boxlang.io) runtime for CI/CD workflows with optional CommandBox CLI and module installation.
+🚀 **Automate your BoxLang setup** - This GitHub Action sets up the [BoxLang Dynamic JVM Language](https://boxlang.io) runtime for CI/CD workflows with optional CommandBox CLI and module installation. Supports **Linux, macOS, and Windows** runners.
 
 ## 📋 Inputs
 
@@ -25,14 +26,14 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
 ```
 
 ### 📦 With BoxLang Modules
 
 ```yaml
 - name: Setup BoxLang
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     modules: bx-ai bx-orm bx-pdf
 ```
@@ -41,16 +42,33 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with specific version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     version: snapshot
 ```
 
-### 📁 Custom Installation Directory
+### �️ Multi-OS Matrix (Linux, macOS, Windows)
+
+```yaml
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup BoxLang
+        uses: ortus-boxlang/setup-boxlang@main
+
+      - name: Verify BoxLang
+        run: boxlang --version
+```
+
+### �📁 Custom Installation Directory
 
 ```yaml
 - name: Setup BoxLang with custom installation directory
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     boxlang-home: /tmp/boxlang
 ```
@@ -59,7 +77,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
     with:
         with-commandbox: true
 ```
@@ -68,7 +86,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with specific CommandBox version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_version: 6.0.0
@@ -78,7 +96,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox and modules
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_modules: commandbox-cfconfig,commandbox-dotenv
@@ -88,7 +106,7 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup BoxLang with CommandBox (full setup)
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     commandbox_version: 6.0.0
@@ -99,7 +117,7 @@ Install BoxLang with CommandBox and ForgeBox API Key:
 
 ```yaml
 - name: Setup BoxLang with CommandBox and ForgeBox API Key
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
     forgeboxAPIKey: ${{ secrets.FORGEBOX_API_KEY }}
@@ -109,9 +127,9 @@ Here is another one:
 
 ```yaml
 - name: Setup BoxLang with specific version
-  uses: ortus-boxlang/setup-boxlang@1.1.0
+  uses: ortus-boxlang/setup-boxlang@main
   with:
-    version: 1.1.0
+    version: main
 ```
 
 
@@ -125,6 +143,8 @@ This action provides the following outputs for use in subsequent workflow steps:
 ## 🚀 About BoxLang
 
 **BoxLang** is a modern dynamic JVM language that can be deployed on multiple runtimes: operating system (Windows/Mac/*nix/Embedded), web server, lambda, iOS, Android, web assembly, and more. BoxLang combines many features from different programming languages, including Java, CFML, Python, Ruby, Go, and PHP, to provide developers with a modern and expressive syntax.
+
+> **Platform Support:** This action uses the official Ortus Solutions bash installer for Linux/macOS and the official PowerShell installer for Windows, providing native support across all major GitHub Actions runner platforms.
 
 ### ✨ Why BoxLang?
 

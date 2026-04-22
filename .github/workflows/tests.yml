@@ -101,7 +101,7 @@ jobs:
   test_multiple_os:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     name: BoxLang on ${{ matrix.os }}
     steps:
@@ -210,6 +210,77 @@ jobs:
 
       - name: Verify ForgeBox API Key is configured
         run: box config show endpoints.forgebox.APIToken
+
+  test_windows_default_home:
+    runs-on: windows-latest
+    name: BoxLang on Windows - Default Home
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run local action
+        uses: ./
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify BOXLANG_HOME is set (Windows)
+        shell: powershell
+        run: |
+          Write-Host "BOXLANG_HOME: $env:BOXLANG_HOME"
+          $expected = "$env:GITHUB_WORKSPACE\.boxlang"
+          if ($env:BOXLANG_HOME -ne $expected) {
+            Write-Host "BOXLANG_HOME is not set to the expected default value"
+            Write-Host "Expected: $expected"
+            Write-Host "Got: $env:BOXLANG_HOME"
+            exit 1
+          }
+          Write-Host "BOXLANG_HOME is correctly set to workspace"
+
+  test_windows_custom_home:
+    runs-on: windows-latest
+    name: BoxLang on Windows - Custom Home
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run with custom boxlang-home
+        uses: ./
+        with:
+          boxlang-home: C:\boxlang-custom
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify BOXLANG_HOME is set correctly (Windows)
+        shell: powershell
+        run: |
+          Write-Host "BOXLANG_HOME: $env:BOXLANG_HOME"
+          if ($env:BOXLANG_HOME -ne "C:\boxlang-custom") {
+            Write-Host "BOXLANG_HOME is not set to the expected value"
+            Write-Host "Expected: C:\boxlang-custom"
+            Write-Host "Got: $env:BOXLANG_HOME"
+            exit 1
+          }
+          Write-Host "BOXLANG_HOME is correctly set to custom path"
+
+  test_windows_commandbox:
+    runs-on: windows-latest
+    name: BoxLang on Windows - With CommandBox
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run with CommandBox
+        uses: ./
+        with:
+          with-commandbox: true
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify CommandBox installation
+        run: box version
 
   test_custom_boxlang_home:
     runs-on: ubuntu-latest

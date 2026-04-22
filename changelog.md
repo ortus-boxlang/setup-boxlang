@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ----
 
-## [1.4.0]
+## [1.4.0] - 2026-04-22
+
+### Added
+
+- **Windows support**: The action now works on `windows-latest` GitHub Actions runners in addition to Linux and macOS.
+
+### Changed
+
+- All existing installation steps renamed with `(Unix/Linux/macOS)` suffix and made conditional (`runner.os != 'Windows'`).
+- Action outputs now resolve correctly from the appropriate platform-specific step on both Windows and Unix runners.
 
 ----
 

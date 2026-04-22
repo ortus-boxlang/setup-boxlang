@@ -173,8 +173,13 @@ runs:
           Remove-Item $tmpScript -Force -ErrorAction SilentlyContinue
         }
 
-        # Reload PATH so boxlang (and box, if installed) are available in this session and subsequent steps
-        $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+        # Reload PATH so boxlang (and box, if installed) are available in this session and subsequent steps.
+        # Explicitly prepend c:\boxlang\bin (the known BoxLang install location) because the installer
+        # writes to the Machine-level registry PATH which requires admin — if that write is silently
+        # skipped box.exe won't be found even though boxlang (symlinked to the user-level .boxlang\bin)
+        # would still resolve. Explicit prepend guarantees both executables are available.
+        $env:PATH = "c:\boxlang\bin;" +
+                    [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
                     [System.Environment]::GetEnvironmentVariable("PATH", "User")
         Add-Content -Path $env:GITHUB_ENV -Value "PATH=$env:PATH"
 

@@ -152,11 +152,19 @@ runs:
           exit 1
         }
 
-        # Pass version via environment variable (supported by the installer) and run non-interactively
+        # Build installer args. NOTE: --yes must come BEFORE --without-commandbox so that
+        # --without-commandbox (processed last) wins over the --yes flag that also sets INSTALL_COMMANDBOX=true.
         Write-Host "Installing BoxLang version: ${{ inputs.version }}"
         $env:BOXLANG_TARGET_VERSION = "${{ inputs.version }}"
+        if ("${{ inputs.with-commandbox }}" -eq "true") {
+          # Let the BoxLang installer handle CommandBox on Windows (uses the correct type/windows binary).
+          # Note: commandbox_version is ignored on Windows; the BoxLang installer always installs the latest.
+          $installerArgs = @("--yes", "--with-commandbox")
+        } else {
+          $installerArgs = @("--yes", "--without-commandbox")
+        }
         try {
-          & $tmpScript --without-commandbox --yes
+          & $tmpScript @installerArgs
           if ($LASTEXITCODE -ne 0) { throw "Installer exited with code $LASTEXITCODE" }
         } catch {
           Write-Host "BoxLang installation failed: $_"
@@ -165,7 +173,7 @@ runs:
           Remove-Item $tmpScript -Force -ErrorAction SilentlyContinue
         }
 
-        # Reload PATH so boxlang is available in this session
+        # Reload PATH so boxlang (and box, if installed) are available in this session and subsequent steps
         $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
                     [System.Environment]::GetEnvironmentVariable("PATH", "User")
         Add-Content -Path $env:GITHUB_ENV -Value "PATH=$env:PATH"
@@ -178,6 +186,17 @@ runs:
           exit 1
         }
         Write-Host "BoxLang version: $version"
+
+        # Verify CommandBox if requested (installed by BoxLang installer above)
+        if ("${{ inputs.with-commandbox }}" -eq "true") {
+          Write-Host "Verifying CommandBox installation..."
+          $boxVersion = box version 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "CommandBox installation verification failed"
+            exit 1
+          }
+          Write-Host "CommandBox version: $boxVersion"
+        }
 
         # Capture version and installation path for outputs
         $BOXLANG_VERSION = ($version | Select-String -Pattern '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' |
@@ -234,39 +253,6 @@ runs:
           exit 1
         fi
         echo "CommandBox setup completed successfully"
-
-    - name: Install CommandBox (Windows)
-      if: ${{ inputs.with-commandbox == 'true' && runner.os == 'Windows' }}
-      shell: powershell
-      run: |
-        # Latest Stable or Specific Version
-        if ("${{ inputs.commandbox_version }}" -eq "latest") {
-          Write-Host "Installing Latest Stable CommandBox"
-          Invoke-WebRequest -Uri "https://www.ortussolutions.com/parent/download/commandbox/type/bin" -OutFile "box.zip" -UseBasicParsing
-        } else {
-          Write-Host "Installing CommandBox v${{ inputs.commandbox_version }}"
-          Invoke-WebRequest -Uri "https://downloads.ortussolutions.com/ortussolutions/commandbox/${{ inputs.commandbox_version }}/commandbox-bin-${{ inputs.commandbox_version }}.zip" -OutFile "box.zip" -UseBasicParsing
-        }
-
-        # Unzip and Install
-        Expand-Archive -Path "box.zip" -DestinationPath "$env:ProgramFiles\CommandBox" -Force
-        Remove-Item "box.zip" -Force
-
-        # Add to PATH
-        $boxPath = "$env:ProgramFiles\CommandBox"
-        if ($env:PATH -notlike "*$boxPath*") {
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$env:PATH;$boxPath"
-        }
-
-        # Verify CommandBox installation
-        Write-Host "Verifying CommandBox installation..."
-        try {
-          box version
-          Write-Host "CommandBox setup completed successfully"
-        } catch {
-          Write-Host "CommandBox installation verification failed: $_"
-          exit 1
-        }
 
     - name: Install CommandBox modules
       if: ${{ inputs.with-commandbox == 'true' && inputs.commandbox_modules != '' && runner.os != 'Windows' }}

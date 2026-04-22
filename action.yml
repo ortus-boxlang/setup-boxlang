@@ -145,7 +145,7 @@ runs:
           $installerUrl = "https://install-windows.boxlang.io"
           $installerScript = Invoke-WebRequest -Uri $installerUrl -UseBasicParsing -ErrorAction Stop
           Write-Host "Installing BoxLang version: ${{ inputs.version }}"
-          
+
           # Execute the installer script
           Invoke-Expression $installerScript.Content
         } catch {

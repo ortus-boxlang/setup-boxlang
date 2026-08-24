@@ -48,6 +48,24 @@ jobs:
       - name: Verify BoxLang installation
         run: boxlang --version
 
+  test_with_bx_cli_module:
+    runs-on: ubuntu-latest
+    name: BoxLang with bx-cli Module
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Run with bx-cli module
+        uses: ./
+        with:
+          modules: "bx-cli"
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify bx-cli's box executable is on PATH
+        run: box version
+
   test_skip_packages:
     runs-on: ubuntu-latest
     name: BoxLang Skip Package Installation

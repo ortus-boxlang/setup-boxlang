@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ----
 
+## [Unreleased]
+
+### Fixed
+
+- An executable a module installs (e.g. `bx-cli`'s own `box` script, via `install-bx-module`'s support for a module's `box.json` declaring `boxlang.executable`/`boxlang.executables`) is written to `${BOXLANG_HOME}/bin`, which was never added to the runner's `PATH`. Only `/usr/local/bin` (where the core `boxlang`/`bx` binaries are installed) was on `PATH`, so a module-provided executable like `box` was unreachable in every step after installation. `${BOXLANG_HOME}/bin` is now added to `$GITHUB_PATH` right after `BOXLANG_HOME` is set, before any modules are installed.
+
+----
+
 ## [1.4.0] - 2026-04-22
 
 ### Added

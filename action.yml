@@ -66,6 +66,17 @@ runs:
         echo "BOXLANG_HOME=$BOXLANG_HOME_DIR" >> $GITHUB_ENV
         export BOXLANG_HOME="$BOXLANG_HOME_DIR"
 
+        # install-bx-module writes module-provided executables (e.g. bx-cli's
+        # own "box" script, which lets bx-cli stand in for CommandBox) to
+        # ${BOXLANG_HOME}/bin. That directory is not on the default runner
+        # PATH the way /usr/local/bin (where the core boxlang/bx binaries are
+        # installed) is, so without this, any such executable is unreachable
+        # in this step, the "Install BoxLang modules" step below, and every
+        # later step in the calling workflow. Added unconditionally, before
+        # module installation runs, since it's harmless for a directory with
+        # nothing in it yet.
+        echo "$BOXLANG_HOME_DIR/bin" >> $GITHUB_PATH
+
         # Download BoxLang shell installer
         echo "Downloading BoxLang installer..."
         if ! curl -fsSL https://downloads.ortussolutions.com/ortussolutions/boxlang-quick-installer/install-boxlang.sh -o install-boxlang.sh; then

@@ -10,7 +10,7 @@ jobs:
     name: BoxLang Vanilla
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -23,7 +23,7 @@ jobs:
     name: BoxLang with Specific Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with Specific Version
         uses: ./
@@ -38,7 +38,7 @@ jobs:
     name: BoxLang with Modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with modules
         uses: ./
@@ -71,7 +71,7 @@ jobs:
     name: BoxLang Skip Package Installation
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pre-install packages manually
         run: |
@@ -91,7 +91,7 @@ jobs:
     name: BoxLang Latest Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with latest version (explicit)
         uses: ./
@@ -106,7 +106,7 @@ jobs:
     name: BoxLang Snapshot Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with snapshot version
         uses: ./
@@ -124,7 +124,7 @@ jobs:
     name: BoxLang on ${{ matrix.os }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -137,7 +137,7 @@ jobs:
     name: Test Action Outputs
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         id: setup-boxlang
@@ -153,7 +153,7 @@ jobs:
     name: BoxLang with CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox
         uses: ./
@@ -171,7 +171,7 @@ jobs:
     name: BoxLang with specific CommandBox version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox specific version
         uses: ./
@@ -190,7 +190,7 @@ jobs:
     name: BoxLang with CommandBox modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox and modules
         uses: ./
@@ -212,7 +212,7 @@ jobs:
     name: BoxLang with ForgeBox API Key
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox and ForgeBox API Key
         uses: ./
@@ -234,7 +234,7 @@ jobs:
     name: BoxLang on Windows - Default Home
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -260,7 +260,7 @@ jobs:
     name: BoxLang on Windows - Custom Home
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with custom boxlang-home
         uses: ./
@@ -287,7 +287,7 @@ jobs:
     name: BoxLang on Windows - With CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox
         uses: ./
@@ -305,7 +305,7 @@ jobs:
     name: BoxLang with Custom Home Directory
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with custom boxlang-home
         uses: ./
@@ -339,7 +339,7 @@ jobs:
         pull-requests: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run without custom boxlang-home (should default to workspace)
         uses: ./

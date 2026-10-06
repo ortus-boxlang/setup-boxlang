@@ -13,7 +13,7 @@ Configure your BoxLang setup using these input parameters:
 | Input                    | Type          | Default       | Description |
 | ------------------------ | ------------- | ------------- | ----------- |
 | `boxlang-home` | string       | `${GITHUB_WORKSPACE}/.boxlang`       | Custom directory for BoxLang installation. Defaults to a writable directory in the workspace to avoid read-only filesystem issues. |
-| `with-commandbox` | boolean       | `false`       | If true, it will install the latest CommandBox as well. |
+| `with-commandbox` | boolean       | `false`       | Installs the legacy standalone CommandBox binary. For BoxLang-native CommandBox, use `modules: bx-cli`. |
 | `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
 | `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
 | `forgeboxAPIKey` | string       | ---           | Configures the ForgeBox API Key when `with-commandbox` is true or the `bx-cli` module is installed. |
@@ -57,13 +57,18 @@ Configure your BoxLang setup using these input parameters:
     forgeboxAPIKey: ${{ secrets.FORGEBOX_TOKEN }}
 ```
 
+`bx-cli` is the BoxLang-native version of CommandBox, installed as a module under
+`${BOXLANG_HOME}/modules/bx-cli` on Linux, macOS, and Windows. It runs through
+BoxLang rather than a separate standalone binary.
+
 No `with-commandbox` setting is required for `bx-cli`. The action configures it
-through `boxlang cli`, independently of which executable `box` resolves to.
-If both CLIs are installed, both are configured; they share the default
+through `boxlang cli`, independently of which launcher `box` resolves to.
+If both versions of CommandBox are installed, both are configured; they share the default
 CommandBox home and configuration. Token configuration suppresses token output.
 
-BoxLang module installation, including `bx-cli`, currently supports Linux and
-macOS only. Traditional CommandBox authentication also supports Windows.
+`with-commandbox: true` continues to install the legacy standalone binary for
+backward compatibility. Switching that input to install `bx-cli` is a future
+change, not part of this release.
 
 ### �️ Multi-OS Matrix (Linux, macOS, Windows)
 

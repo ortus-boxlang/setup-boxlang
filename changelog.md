@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `forgeboxAPIKey` now configures the `bx-cli` BoxLang module on Linux and macOS without requiring `with-commandbox: true`.
+- `forgeboxAPIKey` now configures BoxLang-native CommandBox (`bx-cli`) on Linux, macOS, and Windows without requiring `with-commandbox: true`.
 - Traditional CommandBox steps use its explicit executable path so a `bx-cli` launcher on `PATH` cannot intercept them when both CLIs are installed.
 - Windows ForgeBox configuration now checks the native process exit code and fails if configuration fails.
 
@@ -25,8 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Authentication regression coverage for traditional CommandBox on Linux, macOS, and Windows, and for `bx-cli` with and without traditional CommandBox on Linux and macOS.
-- Documented `bx-cli` authentication, shared configuration, and platform limitations.
+- Windows BoxLang module installation using the PowerShell module installer, with module launchers exposed through `${BOXLANG_HOME}/bin`.
+- Authentication regression coverage for legacy and native CommandBox on Linux, macOS, and Windows, including coexistence and a custom Windows BoxLang home.
+- Documented native CommandBox authentication and shared configuration. `with-commandbox` still installs the legacy standalone binary; migration to `bx-cli` remains a future change.
 
 ----
 

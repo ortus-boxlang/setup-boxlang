@@ -11,7 +11,7 @@ inputs:
     required: false
     default: ''
   with-commandbox:
-    description: "Whether to install with CommandBox (default: false)"
+    description: "Whether to install the legacy standalone CommandBox binary (default: false)"
     required: false
     default: 'false'
   commandbox_version:
@@ -150,6 +150,7 @@ runs:
         Write-Host "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
         Add-Content -Path $env:GITHUB_ENV -Value "BOXLANG_HOME=$BOXLANG_HOME_DIR"
         $env:BOXLANG_HOME = $BOXLANG_HOME_DIR
+        Add-Content -Path $env:GITHUB_PATH -Value "$BOXLANG_HOME_DIR\bin"
 
         # Download the Windows PowerShell installer to a temp file and execute it.
         # We cannot use Invoke-Expression on .Content because in PS7+ .Content is a byte[].
@@ -207,7 +208,7 @@ runs:
 
         Write-Host "BoxLang setup completed successfully"
 
-    - name: Install BoxLang modules
+    - name: Install BoxLang modules (Unix/Linux/macOS)
       if: ${{ inputs.modules != '' && runner.os != 'Windows' }}
       shell: bash
       env:
@@ -228,6 +229,23 @@ runs:
         fi
         echo "Modules installed successfully"
 
+    - name: Install BoxLang modules (Windows)
+      if: ${{ inputs.modules != '' && runner.os == 'Windows' }}
+      shell: powershell
+      env:
+        TERM: xterm-256color
+        INSTALL_MODULES: ${{ inputs.modules }}
+      run: |
+        Write-Host "BoxLang Home: $env:BOXLANG_HOME"
+        $modules = @($env:INSTALL_MODULES -split '\s+' | Where-Object { $_ -ne '' })
+        $installer = (Get-Command install-bx-module.ps1 -ErrorAction Stop).Source
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $installer @modules
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Module installation failed"
+          exit 1
+        }
+        Write-Host "Modules installed successfully"
+
     - name: Configure bx-cli ForgeBox API Key (Unix/Linux/macOS)
       if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
       shell: bash
@@ -242,6 +260,22 @@ runs:
           fi
           echo "bx-cli ForgeBox API Key configured successfully"
         fi
+
+    - name: Configure bx-cli ForgeBox API Key (Windows)
+      if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
+      shell: powershell
+      env:
+        FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
+      run: |
+        if (Test-Path "$env:BOXLANG_HOME\modules\bx-cli" -PathType Container) {
+          Write-Host "Setting up bx-cli ForgeBox API Key..."
+          boxlang cli config set "endpoints.forgebox.APIToken=$env:FORGEBOX_API_KEY" --quiet
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to configure bx-cli ForgeBox API Key"
+            exit 1
+          }
+          Write-Host "bx-cli ForgeBox API Key configured successfully"
+        }
 
     - name: Install CommandBox (Unix/Linux/macOS)
       if: ${{ inputs.with-commandbox == 'true' && runner.os != 'Windows' }}

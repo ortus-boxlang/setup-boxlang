@@ -23,7 +23,7 @@ inputs:
     required: false
     default: ""
   forgeboxAPIKey:
-    description: "ForgeBox API Key for CommandBox or the bx-cli BoxLang module"
+    description: "ForgeBox API Key for CommandBox"
     required: false
     default: ''
   modules:

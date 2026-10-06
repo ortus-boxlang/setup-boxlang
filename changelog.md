@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+----
+
+## [1.5.1] - 2026-10-06
+
+### Fixed
+
+- `forgeboxAPIKey` now configures the `bx-cli` BoxLang module on Linux and macOS without requiring `with-commandbox: true`.
+- Traditional CommandBox steps use its explicit executable path so a `bx-cli` launcher on `PATH` cannot intercept them when both CLIs are installed.
+- Windows ForgeBox configuration now checks the native process exit code and fails if configuration fails.
+
+### Security
+
+- Pass ForgeBox tokens through environment variables and quoted arguments instead of interpolating them into shell scripts. Suppress token output with `--quiet` for both CLIs.
+
+### Added
+
+- Authentication regression coverage for traditional CommandBox on Linux, macOS, and Windows, and for `bx-cli` with and without traditional CommandBox on Linux and macOS.
+- Documented `bx-cli` authentication, shared configuration, and platform limitations.
+
+----
+
+## [1.5.0] - 2026-08-24
+
 ### Fixed
 
 - An executable a module installs (e.g. `bx-cli`'s own `box` script, via `install-bx-module`'s support for a module's `box.json` declaring `boxlang.executable`/`boxlang.executables`) is written to `${BOXLANG_HOME}/bin`, which was never added to the runner's `PATH`. Only `/usr/local/bin` (where the core `boxlang`/`bx` binaries are installed) was on `PATH`, so a module-provided executable like `box` was unreachable in every step after installation. `${BOXLANG_HOME}/bin` is now added to `$GITHUB_PATH` right after `BOXLANG_HOME` is set, before any modules are installed.

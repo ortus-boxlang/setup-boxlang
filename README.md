@@ -16,7 +16,7 @@ Configure your BoxLang setup using these input parameters:
 | `with-commandbox` | boolean       | `false`       | If true, it will install the latest CommandBox as well. |
 | `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
 | `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
-| `forgeboxAPIKey` | string       | ---           | If added, it will configure the ForgeBox API Key in CommandBox. Only used if `with-commandbox` is true. |
+| `forgeboxAPIKey` | string       | ---           | Configures the ForgeBox API Key when `with-commandbox` is true or the `bx-cli` module is installed. |
 | `modules`              | string        | ---           | If added, a space-delimited list of modules to install upon installation of the binary for you. |
 | `version`                | semver        | `latest`      | The BoxLang version to install, if not passed we use the latest stable. |
 
@@ -46,6 +46,24 @@ Configure your BoxLang setup using these input parameters:
   with:
     version: snapshot
 ```
+
+### 🔑 bx-cli with ForgeBox Authentication
+
+```yaml
+- name: Setup bx-cli with ForgeBox API Key
+  uses: ortus-boxlang/setup-boxlang@1.5.1
+  with:
+    modules: bx-cli
+    forgeboxAPIKey: ${{ secrets.FORGEBOX_TOKEN }}
+```
+
+No `with-commandbox` setting is required for `bx-cli`. The action configures it
+through `boxlang cli`, independently of which executable `box` resolves to.
+If both CLIs are installed, both are configured; they share the default
+CommandBox home and configuration. Token configuration suppresses token output.
+
+BoxLang module installation, including `bx-cli`, currently supports Linux and
+macOS only. Traditional CommandBox authentication also supports Windows.
 
 ### �️ Multi-OS Matrix (Linux, macOS, Windows)
 

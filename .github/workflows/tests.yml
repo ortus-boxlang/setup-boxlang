@@ -53,7 +53,7 @@ jobs:
     name: BoxLang with bx-cli Module
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with bx-cli module
         uses: ./

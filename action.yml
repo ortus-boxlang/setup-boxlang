@@ -11,7 +11,7 @@ inputs:
     required: false
     default: ''
   with-commandbox:
-    description: "Whether to install with CommandBox (default: false)"
+    description: "Whether to install the legacy standalone CommandBox binary (default: false)"
     required: false
     default: 'false'
   commandbox_version:
@@ -23,7 +23,7 @@ inputs:
     required: false
     default: ""
   forgeboxAPIKey:
-    description: "ForgeBox API Key"
+    description: "ForgeBox API Key for CommandBox"
     required: false
     default: ''
   modules:
@@ -40,7 +40,7 @@ runs:
   steps:
 
     - name: Set up Temurin JDK 21
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         distribution: 'temurin'
         java-version: '21'
@@ -113,7 +113,10 @@ runs:
         # Fix ownership of BOXLANG_HOME after sudo installation
         # This ensures module installation (which runs without sudo) can write to the directory
         echo "Fixing ownership of BOXLANG_HOME..."
-        sudo chown -R $(whoami):$(whoami) "$BOXLANG_HOME_DIR" || true
+        if ! sudo chown -R "$(id -u):$(id -g)" "$BOXLANG_HOME_DIR"; then
+          echo "Failed to restore ownership of BOXLANG_HOME"
+          exit 1
+        fi
 
         # Capture version and installation path
         BOXLANG_VERSION=$(boxlang --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?' || echo "unknown")
@@ -150,6 +153,7 @@ runs:
         Write-Host "Setting BOXLANG_HOME to: $BOXLANG_HOME_DIR"
         Add-Content -Path $env:GITHUB_ENV -Value "BOXLANG_HOME=$BOXLANG_HOME_DIR"
         $env:BOXLANG_HOME = $BOXLANG_HOME_DIR
+        Add-Content -Path $env:GITHUB_PATH -Value "$BOXLANG_HOME_DIR\bin"
 
         # Download the Windows PowerShell installer to a temp file and execute it.
         # We cannot use Invoke-Expression on .Content because in PS7+ .Content is a byte[].
@@ -207,7 +211,7 @@ runs:
 
         Write-Host "BoxLang setup completed successfully"
 
-    - name: Install BoxLang modules
+    - name: Install BoxLang modules (Unix/Linux/macOS)
       if: ${{ inputs.modules != '' && runner.os != 'Windows' }}
       shell: bash
       env:
@@ -228,6 +232,54 @@ runs:
         fi
         echo "Modules installed successfully"
 
+    - name: Install BoxLang modules (Windows)
+      if: ${{ inputs.modules != '' && runner.os == 'Windows' }}
+      shell: powershell
+      env:
+        TERM: xterm-256color
+        INSTALL_MODULES: ${{ inputs.modules }}
+      run: |
+        Write-Host "BoxLang Home: $env:BOXLANG_HOME"
+        $modules = @($env:INSTALL_MODULES -split '\s+' | Where-Object { $_ -ne '' })
+        $installer = (Get-Command install-bx-module.ps1 -ErrorAction Stop).Source
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $installer @modules
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Module installation failed"
+          exit 1
+        }
+        Write-Host "Modules installed successfully"
+
+    - name: Configure bx-cli ForgeBox API Key (Unix/Linux/macOS)
+      if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
+      shell: bash
+      env:
+        FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
+      run: |
+        if [[ -d "$BOXLANG_HOME/modules/bx-cli" ]]; then
+          echo "Setting up bx-cli ForgeBox API Key..."
+          if ! boxlang cli config set "endpoints.forgebox.APIToken=$FORGEBOX_API_KEY" --quiet; then
+            echo "Failed to configure bx-cli ForgeBox API Key"
+            exit 1
+          fi
+          echo "bx-cli ForgeBox API Key configured successfully"
+        fi
+
+    - name: Configure bx-cli ForgeBox API Key (Windows)
+      if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
+      shell: powershell
+      env:
+        FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
+      run: |
+        if (Test-Path "$env:BOXLANG_HOME\modules\bx-cli" -PathType Container) {
+          Write-Host "Setting up bx-cli ForgeBox API Key..."
+          boxlang cli config set "endpoints.forgebox.APIToken=$env:FORGEBOX_API_KEY" --quiet
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to configure bx-cli ForgeBox API Key"
+            exit 1
+          }
+          Write-Host "bx-cli ForgeBox API Key configured successfully"
+        }
+
     - name: Install CommandBox (Unix/Linux/macOS)
       if: ${{ inputs.with-commandbox == 'true' && runner.os != 'Windows' }}
       shell: bash
@@ -246,7 +298,7 @@ runs:
 
         # Verify CommandBox installation
         echo "Verifying CommandBox installation..."
-        if ! box version; then
+        if ! /usr/local/bin/box version; then
           echo "CommandBox installation verification failed"
           exit 1
         fi
@@ -300,7 +352,7 @@ runs:
         # Install CommandBox packages
         INSTALL_MODULES="${{ inputs.commandbox_modules }}"
         echo "Installing CommandBox modules: $INSTALL_MODULES"
-        if ! box install $INSTALL_MODULES; then
+        if ! /usr/local/bin/box install $INSTALL_MODULES; then
           echo "CommandBox module installation failed"
           exit 1
         fi
@@ -309,10 +361,12 @@ runs:
     - name: Configure ForgeBox API Key (Unix/Linux/macOS)
       if: ${{ inputs.with-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
       shell: bash
+      env:
+        FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
       run: |
         # Configure ForgeBox API Key
         echo "Setting up ForgeBox API Key..."
-        if ! box config set endpoints.forgebox.APIToken=${{ inputs.forgeboxAPIKey }}; then
+        if ! /usr/local/bin/box config set "endpoints.forgebox.APIToken=$FORGEBOX_API_KEY" --quiet; then
           echo "Failed to configure ForgeBox API Key"
           exit 1
         fi
@@ -321,15 +375,16 @@ runs:
     - name: Configure ForgeBox API Key (Windows)
       if: ${{ inputs.with-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
       shell: powershell
+      env:
+        FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
       run: |
         Write-Host "Setting up ForgeBox API Key..."
-        try {
-          box config set endpoints.forgebox.APIToken=${{ inputs.forgeboxAPIKey }}
-          Write-Host "ForgeBox API Key configured successfully"
-        } catch {
-          Write-Host "Failed to configure ForgeBox API Key: $_"
+        & "C:\ProgramData\CommandBox\box.exe" config set "endpoints.forgebox.APIToken=$env:FORGEBOX_API_KEY" --quiet
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Failed to configure ForgeBox API Key"
           exit 1
         }
+        Write-Host "ForgeBox API Key configured successfully"
 
 outputs:
   boxlang-version:

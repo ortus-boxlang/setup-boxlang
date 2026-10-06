@@ -10,7 +10,7 @@ jobs:
     name: BoxLang Vanilla
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -23,7 +23,7 @@ jobs:
     name: BoxLang with Specific Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with Specific Version
         uses: ./
@@ -38,7 +38,7 @@ jobs:
     name: BoxLang with Modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with modules
         uses: ./
@@ -53,7 +53,7 @@ jobs:
     name: BoxLang with bx-cli Module
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with bx-cli module
         uses: ./
@@ -71,7 +71,7 @@ jobs:
     name: BoxLang Skip Package Installation
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pre-install packages manually
         run: |
@@ -91,7 +91,7 @@ jobs:
     name: BoxLang Latest Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with latest version (explicit)
         uses: ./
@@ -106,7 +106,7 @@ jobs:
     name: BoxLang Snapshot Version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with snapshot version
         uses: ./
@@ -124,7 +124,7 @@ jobs:
     name: BoxLang on ${{ matrix.os }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -137,7 +137,7 @@ jobs:
     name: Test Action Outputs
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         id: setup-boxlang
@@ -153,7 +153,7 @@ jobs:
     name: BoxLang with CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox
         uses: ./
@@ -171,7 +171,7 @@ jobs:
     name: BoxLang with specific CommandBox version
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox specific version
         uses: ./
@@ -190,7 +190,7 @@ jobs:
     name: BoxLang with CommandBox modules
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox and modules
         uses: ./
@@ -208,17 +208,22 @@ jobs:
         run: box list --system
 
   test_with_forgebox_api_key:
-    runs-on: ubuntu-latest
-    name: BoxLang with ForgeBox API Key
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: CommandBox with ForgeBox API Key on ${{ matrix.os }}
+    env:
+      EXPECTED_FORGEBOX_API_KEY: "test-api-key-$-quote'"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox and ForgeBox API Key
         uses: ./
         with:
           with-commandbox: true
-          forgeboxAPIKey: "test-api-key"
+          forgeboxAPIKey: ${{ env.EXPECTED_FORGEBOX_API_KEY }}
 
       - name: Verify BoxLang installation
         run: boxlang --version
@@ -226,15 +231,112 @@ jobs:
       - name: Verify CommandBox installation
         run: box version
 
-      - name: Verify ForgeBox API Key is configured
-        run: box config show endpoints.forgebox.APIToken
+      - name: Verify ForgeBox API Key is configured (Unix/Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          config = json.loads((Path.home() / ".CommandBox" / "CommandBox.json").read_text())
+          assert config["endpoints"]["forgebox"]["APIToken"] == os.environ["EXPECTED_FORGEBOX_API_KEY"]
+          PY
+
+      - name: Verify ForgeBox API Key is configured (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $config = Get-Content "$HOME\.CommandBox\CommandBox.json" -Raw | ConvertFrom-Json
+          if ($config.endpoints.forgebox.APIToken -cne $env:EXPECTED_FORGEBOX_API_KEY) {
+            Write-Host "ForgeBox API Key was not persisted correctly"
+            exit 1
+          }
+
+  test_bx_cli_forgebox_api_key:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        commandbox: ['false', 'true']
+        boxlang-home: ['']
+        include:
+          - os: windows-latest
+            commandbox: 'false'
+            boxlang-home: 'C:\boxlang-native-custom'
+    runs-on: ${{ matrix.os }}
+    name: bx-cli ForgeBox API Key on ${{ matrix.os }} (CommandBox=${{ matrix.commandbox }})
+    env:
+      EXPECTED_FORGEBOX_API_KEY: "test-api-key-$-quote'"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Run with bx-cli and ForgeBox API Key
+        uses: ./
+        with:
+          modules: "bx-cli"
+          boxlang-home: ${{ matrix.boxlang-home || '' }}
+          with-commandbox: ${{ matrix.commandbox }}
+          forgeboxAPIKey: ${{ env.EXPECTED_FORGEBOX_API_KEY }}
+
+      - name: Verify bx-cli and its persisted ForgeBox API Key (Unix/Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          boxlang cli version
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          config = json.loads((Path.home() / ".CommandBox" / "CommandBox.json").read_text())
+          assert config["endpoints"]["forgebox"]["APIToken"] == os.environ["EXPECTED_FORGEBOX_API_KEY"]
+          PY
+
+      - name: Verify bx-cli and its persisted ForgeBox API Key (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        env:
+          EXPECTED_BOXLANG_HOME: ${{ matrix.boxlang-home }}
+        run: |
+          $expectedHome = if ($env:EXPECTED_BOXLANG_HOME) {
+            $env:EXPECTED_BOXLANG_HOME
+          } else {
+            "$env:GITHUB_WORKSPACE\.boxlang"
+          }
+          if ($env:BOXLANG_HOME -ne $expectedHome) {
+            Write-Host "BOXLANG_HOME does not match the requested installation directory"
+            exit 1
+          }
+          boxlang cli version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (!(Test-Path "$env:BOXLANG_HOME\modules\bx-cli" -PathType Container)) {
+            Write-Host "Native CommandBox module is missing from BOXLANG_HOME"
+            exit 1
+          }
+          $config = Get-Content "$HOME\.CommandBox\CommandBox.json" -Raw | ConvertFrom-Json
+          if ($config.endpoints.forgebox.APIToken -cne $env:EXPECTED_FORGEBOX_API_KEY) {
+            Write-Host "ForgeBox API Key was not persisted correctly"
+            exit 1
+          }
+          if (($env:PATH -split ';') -notcontains "$env:BOXLANG_HOME\bin") {
+            Write-Host "BOXLANG_HOME bin directory is missing from PATH"
+            exit 1
+          }
+
+      - name: Verify traditional CommandBox is also installed (Unix/Linux/macOS)
+        if: ${{ matrix.commandbox == 'true' && runner.os != 'Windows' }}
+        run: /usr/local/bin/box version
+
+      - name: Verify traditional CommandBox is also installed (Windows)
+        if: ${{ matrix.commandbox == 'true' && runner.os == 'Windows' }}
+        shell: powershell
+        run: |
+          & "C:\ProgramData\CommandBox\box.exe" version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
   test_windows_default_home:
     runs-on: windows-latest
     name: BoxLang on Windows - Default Home
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run local action
         uses: ./
@@ -260,7 +362,7 @@ jobs:
     name: BoxLang on Windows - Custom Home
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with custom boxlang-home
         uses: ./
@@ -287,7 +389,7 @@ jobs:
     name: BoxLang on Windows - With CommandBox
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with CommandBox
         uses: ./
@@ -305,7 +407,7 @@ jobs:
     name: BoxLang with Custom Home Directory
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run with custom boxlang-home
         uses: ./
@@ -339,7 +441,7 @@ jobs:
         pull-requests: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run without custom boxlang-home (should default to workspace)
         uses: ./

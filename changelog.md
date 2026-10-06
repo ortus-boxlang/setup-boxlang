@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+----
+
+## [1.5.1] - 2026-10-06
+
+### Fixed
+
+- `forgeboxAPIKey` now configures BoxLang-native CommandBox (`bx-cli`) on Linux, macOS, and Windows without requiring `with-commandbox: true`.
+- Traditional CommandBox steps use its explicit executable path so a `bx-cli` launcher on `PATH` cannot intercept them when both CLIs are installed.
+- Windows ForgeBox configuration now checks the native process exit code and fails if configuration fails.
+- Restore BoxLang home ownership using the runner's numeric user and group IDs, fixing module installation on macOS where the runner's primary group differs from its username. Ownership failures now stop setup rather than being ignored.
+
+### Security
+
+- Pass ForgeBox tokens through environment variables and quoted arguments instead of interpolating them into shell scripts. Suppress token output with `--quiet` for both CLIs.
+
+### Added
+
+- Windows BoxLang module installation using the PowerShell module installer, with module launchers exposed through `${BOXLANG_HOME}/bin`.
+- Authentication regression coverage for legacy and native CommandBox on Linux, macOS, and Windows, including coexistence and a custom Windows BoxLang home.
+- Documented native CommandBox authentication and shared configuration. `with-commandbox` still installs the legacy standalone binary; migration to `bx-cli` remains a future change.
+
+----
+
+## [1.5.0] - 2026-08-24
+
 ### Fixed
 
 - An executable a module installs (e.g. `bx-cli`'s own `box` script, via `install-bx-module`'s support for a module's `box.json` declaring `boxlang.executable`/`boxlang.executables`) is written to `${BOXLANG_HOME}/bin`, which was never added to the runner's `PATH`. Only `/usr/local/bin` (where the core `boxlang`/`bx` binaries are installed) was on `PATH`, so a module-provided executable like `box` was unreachable in every step after installation. `${BOXLANG_HOME}/bin` is now added to `$GITHUB_PATH` right after `BOXLANG_HOME` is set, before any modules are installed.

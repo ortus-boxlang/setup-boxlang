@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `with-commandbox: true` now installs the BoxLang-native CommandBox CLI (`bx-cli`) as a module instead of the deprecated standalone binary. Listing `bx-cli` in `modules` as well installs it only once.
+- `commandbox_version` and `commandbox_modules` now apply only to the legacy standalone CommandBox installation.
+- `forgeboxAPIKey` now configures bx-cli whenever it is installed, including when `with-commandbox: true` is used without listing `modules`.
+
+### Added
+
+- New `legacy-commandbox` input (default `false`) installs the deprecated standalone CommandBox binary and emits a deprecation warning.
+- Test coverage for bx-cli via `with-commandbox` on Linux and Windows, coexistence with legacy CommandBox, and the legacy-specific inputs.
+
 ----
 
 ## [1.5.1] - 2026-10-06

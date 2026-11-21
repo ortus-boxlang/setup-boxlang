@@ -11,19 +11,23 @@ inputs:
     required: false
     default: ''
   with-commandbox:
-    description: "Whether to install the legacy standalone CommandBox binary (default: false)"
+    description: "Whether to install the BoxLang-native CommandBox CLI (bx-cli) as a module (default: false)"
+    required: false
+    default: 'false'
+  legacy-commandbox:
+    description: "Whether to install the deprecated standalone CommandBox binary (default: false)"
     required: false
     default: 'false'
   commandbox_version:
-    description: "CommandBox version to install (default: latest)"
+    description: "Legacy standalone CommandBox version to install (default: latest)"
     required: false
     default: 'latest'
   commandbox_modules:
-    description: "Comma-delimited list of CommandBox packages to install"
+    description: "Comma-delimited list of legacy standalone CommandBox packages to install"
     required: false
     default: ""
   forgeboxAPIKey:
-    description: "ForgeBox API Key for CommandBox"
+    description: "ForgeBox API Key for bx-cli and/or legacy CommandBox"
     required: false
     default: ''
   modules:
@@ -249,8 +253,58 @@ runs:
         }
         Write-Host "Modules installed successfully"
 
+    - name: Install bx-cli (Unix/Linux/macOS)
+      if: ${{ inputs.with-commandbox == 'true' && !contains(format(' {0} ', inputs.modules), ' bx-cli ') }}
+      shell: bash
+      env:
+        TERM: xterm-256color
+      run: |
+        # bx-cli's launcher is installed into ${BOXLANG_HOME}/bin, which the
+        # BoxLang setup step already added to GITHUB_PATH for later steps.
+        export PATH="$BOXLANG_HOME/bin:$PATH"
+
+        echo "Installing BoxLang-native CommandBox (bx-cli)..."
+        if ! install-bx-module bx-cli; then
+          echo "bx-cli installation failed"
+          exit 1
+        fi
+
+        echo "Verifying bx-cli installation..."
+        if ! boxlang cli version; then
+          echo "bx-cli installation verification failed"
+          exit 1
+        fi
+        echo "bx-cli setup completed successfully"
+
+    - name: Install bx-cli (Windows)
+      if: ${{ inputs.with-commandbox == 'true' && !contains(format(' {0} ', inputs.modules), ' bx-cli ') }}
+      shell: powershell
+      env:
+        TERM: xterm-256color
+      run: |
+        $env:PATH = "$env:BOXLANG_HOME\bin;$env:PATH"
+        Write-Host "Installing BoxLang-native CommandBox (bx-cli)..."
+        $installer = (Get-Command install-bx-module.ps1 -ErrorAction Stop).Source
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $installer bx-cli
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "bx-cli installation failed"
+          exit 1
+        }
+
+        if (!(Test-Path "$env:BOXLANG_HOME\modules\bx-cli" -PathType Container)) {
+          Write-Host "bx-cli module is missing from BOXLANG_HOME"
+          exit 1
+        }
+        Write-Host "Verifying bx-cli installation..."
+        boxlang cli version
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "bx-cli installation verification failed"
+          exit 1
+        }
+        Write-Host "bx-cli setup completed successfully"
+
     - name: Configure bx-cli ForgeBox API Key (Unix/Linux/macOS)
-      if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
+      if: ${{ inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
       shell: bash
       env:
         FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
@@ -265,7 +319,7 @@ runs:
         fi
 
     - name: Configure bx-cli ForgeBox API Key (Windows)
-      if: ${{ inputs.modules != '' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
+      if: ${{ inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
       shell: powershell
       env:
         FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
@@ -280,10 +334,12 @@ runs:
           Write-Host "bx-cli ForgeBox API Key configured successfully"
         }
 
-    - name: Install CommandBox (Unix/Linux/macOS)
-      if: ${{ inputs.with-commandbox == 'true' && runner.os != 'Windows' }}
+    - name: Install legacy CommandBox (Unix/Linux/macOS)
+      if: ${{ inputs.legacy-commandbox == 'true' && runner.os != 'Windows' }}
       shell: bash
       run: |
+        echo "::warning::legacy-commandbox is deprecated; use with-commandbox to install bx-cli instead."
+
         # Latest Stable or Specific Version
         if [[ "${{ inputs.commandbox_version }}" == "latest" ]] ; then
           echo "Installing Latest Stable CommandBox"
@@ -304,10 +360,12 @@ runs:
         fi
         echo "CommandBox setup completed successfully"
 
-    - name: Install CommandBox (Windows)
-      if: ${{ inputs.with-commandbox == 'true' && runner.os == 'Windows' }}
+    - name: Install legacy CommandBox (Windows)
+      if: ${{ inputs.legacy-commandbox == 'true' && runner.os == 'Windows' }}
       shell: powershell
       run: |
+        Write-Host "::warning::legacy-commandbox is deprecated; use with-commandbox to install bx-cli instead."
+
         $boxDir = "C:\ProgramData\CommandBox"
         New-Item -ItemType Directory -Path $boxDir -Force | Out-Null
 
@@ -345,8 +403,8 @@ runs:
         Write-Host "CommandBox version: $boxVersion"
         Write-Host "CommandBox setup completed successfully"
 
-    - name: Install CommandBox modules
-      if: ${{ inputs.with-commandbox == 'true' && inputs.commandbox_modules != '' && runner.os != 'Windows' }}
+    - name: Install legacy CommandBox modules
+      if: ${{ inputs.legacy-commandbox == 'true' && inputs.commandbox_modules != '' && runner.os != 'Windows' }}
       shell: bash
       run: |
         # Install CommandBox packages
@@ -358,8 +416,8 @@ runs:
         fi
         echo "CommandBox modules installed successfully"
 
-    - name: Configure ForgeBox API Key (Unix/Linux/macOS)
-      if: ${{ inputs.with-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
+    - name: Configure legacy CommandBox ForgeBox API Key (Unix/Linux/macOS)
+      if: ${{ inputs.legacy-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os != 'Windows' }}
       shell: bash
       env:
         FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}
@@ -372,8 +430,8 @@ runs:
         fi
         echo "ForgeBox API Key configured successfully"
 
-    - name: Configure ForgeBox API Key (Windows)
-      if: ${{ inputs.with-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
+    - name: Configure legacy CommandBox ForgeBox API Key (Windows)
+      if: ${{ inputs.legacy-commandbox == 'true' && inputs.forgeboxAPIKey != '' && runner.os == 'Windows' }}
       shell: powershell
       env:
         FORGEBOX_API_KEY: ${{ inputs.forgeboxAPIKey }}

@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 ![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-brightgreen)
 
-🚀 **Automate your BoxLang setup** - This GitHub Action sets up the [BoxLang Dynamic JVM Language](https://boxlang.io) runtime for CI/CD workflows with optional CommandBox CLI and module installation. Supports **Linux, macOS, and Windows** runners.
+🚀 **Automate your BoxLang setup** - This GitHub Action sets up the [BoxLang Dynamic JVM Language](https://boxlang.io) runtime for CI/CD workflows with optional BoxLang-native CommandBox (`bx-cli`), legacy standalone CommandBox, and module installation. Supports **Linux, macOS, and Windows** runners.
 
 ## 📋 Inputs
 
@@ -13,10 +13,11 @@ Configure your BoxLang setup using these input parameters:
 | Input                    | Type          | Default       | Description |
 | ------------------------ | ------------- | ------------- | ----------- |
 | `boxlang-home` | string       | `${GITHUB_WORKSPACE}/.boxlang`       | Custom directory for BoxLang installation. Defaults to a writable directory in the workspace to avoid read-only filesystem issues. |
-| `with-commandbox` | boolean       | `false`       | Installs the legacy standalone CommandBox binary. For BoxLang-native CommandBox, use `modules: bx-cli`. |
-| `commandbox_version` | string       | `latest`       | The CommandBox version to install. Only used if `with-commandbox` is true. |
-| `commandbox_modules` | string       | ---           | If added, a comma-delimited list of CommandBox packages to install. Only used if `with-commandbox` is true. |
-| `forgeboxAPIKey` | string       | ---           | Configures the ForgeBox API Key when `with-commandbox` is true or the `bx-cli` module is installed. |
+| `with-commandbox` | boolean       | `false`       | Installs the BoxLang-native CommandBox CLI (`bx-cli`) as a BoxLang module and exposes its `box` launcher on `PATH`. |
+| `legacy-commandbox` | boolean     | `false`       | Installs the deprecated standalone CommandBox binary (legacy behavior of `with-commandbox`). |
+| `commandbox_version` | string       | `latest`       | The legacy standalone CommandBox version to install. Only used if `legacy-commandbox` is true. |
+| `commandbox_modules` | string       | ---           | A comma-delimited list of legacy standalone CommandBox packages to install. Only used if `legacy-commandbox` is true. |
+| `forgeboxAPIKey` | string       | ---           | Configures the ForgeBox API Key for bx-cli, legacy CommandBox, or both when they are installed. |
 | `modules`              | string        | ---           | If added, a space-delimited list of modules to install upon installation of the binary for you. |
 | `version`                | semver        | `latest`      | The BoxLang version to install, if not passed we use the latest stable. |
 
@@ -51,24 +52,22 @@ Configure your BoxLang setup using these input parameters:
 
 ```yaml
 - name: Setup bx-cli with ForgeBox API Key
-  uses: ortus-boxlang/setup-boxlang@1.5.1
+  uses: ortus-boxlang/setup-boxlang@main
   with:
-    modules: bx-cli
+    with-commandbox: true
     forgeboxAPIKey: ${{ secrets.FORGEBOX_TOKEN }}
 ```
 
 `bx-cli` is the BoxLang-native version of CommandBox, installed as a module under
 `${BOXLANG_HOME}/modules/bx-cli` on Linux, macOS, and Windows. It runs through
-BoxLang rather than a separate standalone binary.
+BoxLang rather than a separate standalone binary, and its `box` launcher is exposed
+from `${BOXLANG_HOME}/bin`.
 
-No `with-commandbox` setting is required for `bx-cli`. The action configures it
-through `boxlang cli`, independently of which launcher `box` resolves to.
-If both versions of CommandBox are installed, both are configured; they share the default
-CommandBox home and configuration. Token configuration suppresses token output.
-
-`with-commandbox: true` continues to install the legacy standalone binary for
-backward compatibility. Switching that input to install `bx-cli` is a future
-change, not part of this release.
+`with-commandbox: true` installs bx-cli. If you also list `bx-cli` in `modules`, it
+is installed only once. The action configures the API key through `boxlang cli`,
+independently of which launcher `box` resolves to. If both versions of CommandBox
+are installed (`legacy-commandbox: true` as well), both are configured; they share
+the default CommandBox home and configuration. Token configuration suppresses token output.
 
 ### �️ Multi-OS Matrix (Linux, macOS, Windows)
 
@@ -96,50 +95,59 @@ jobs:
     boxlang-home: /tmp/boxlang
 ```
 
-### 📦 With CommandBox
+### 📦 With BoxLang-native CommandBox (bx-cli)
 
 ```yaml
-- name: Setup BoxLang with CommandBox
-  uses: ortus-boxlang/setup-boxlang@main
-    with:
-        with-commandbox: true
-```
-
-### 🔧 CommandBox with Specific Version
-
-```yaml
-- name: Setup BoxLang with specific CommandBox version
+- name: Setup BoxLang with bx-cli
   uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true
+```
+
+### 🧓 With Legacy Standalone CommandBox (deprecated)
+
+```yaml
+- name: Setup BoxLang with legacy CommandBox
+  uses: ortus-boxlang/setup-boxlang@main
+  with:
+    legacy-commandbox: true
+```
+
+### 🔧 Legacy CommandBox with Specific Version
+
+```yaml
+- name: Setup BoxLang with specific legacy CommandBox version
+  uses: ortus-boxlang/setup-boxlang@main
+  with:
+    legacy-commandbox: true
     commandbox_version: 6.0.0
 ```
 
-### 🛠️ CommandBox with Modules
+### 🛠️ Legacy CommandBox with Modules
 
 ```yaml
-- name: Setup BoxLang with CommandBox and modules
+- name: Setup BoxLang with legacy CommandBox and modules
   uses: ortus-boxlang/setup-boxlang@main
   with:
-    with-commandbox: true
+    legacy-commandbox: true
     commandbox_modules: commandbox-cfconfig,commandbox-dotenv
 ```
 
-### ⚙️ Full Configuration Example
+### ⚙️ Full Legacy Configuration Example
 
 ```yaml
-- name: Setup BoxLang with CommandBox (full setup)
+- name: Setup BoxLang with legacy CommandBox (full setup)
   uses: ortus-boxlang/setup-boxlang@main
   with:
-    with-commandbox: true
+    legacy-commandbox: true
     commandbox_version: 6.0.0
     commandbox_modules: commandbox-cfconfig,commandbox-dotenv,commandbox-fusionreactor
 ```
 
-Install BoxLang with CommandBox and ForgeBox API Key:
+Install BoxLang with bx-cli and ForgeBox API Key:
 
 ```yaml
-- name: Setup BoxLang with CommandBox and ForgeBox API Key
+- name: Setup BoxLang with bx-cli and ForgeBox API Key
   uses: ortus-boxlang/setup-boxlang@main
   with:
     with-commandbox: true

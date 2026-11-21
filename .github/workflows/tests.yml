@@ -150,12 +150,12 @@ jobs:
 
   test_with_commandbox:
     runs-on: ubuntu-latest
-    name: BoxLang with CommandBox
+    name: BoxLang with bx-cli (with-commandbox)
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Run with CommandBox
+      - name: Run with bx-cli
         uses: ./
         with:
           with-commandbox: true
@@ -163,72 +163,94 @@ jobs:
       - name: Verify BoxLang installation
         run: boxlang --version
 
-      - name: Verify CommandBox installation
-        run: box version
+      - name: Verify bx-cli installation
+        run: |
+          test -d "$BOXLANG_HOME/modules/bx-cli"
+          boxlang cli version
+          box version
 
-  test_with_commandbox_version:
+  test_with_commandbox_and_bx_cli_module:
     runs-on: ubuntu-latest
-    name: BoxLang with specific CommandBox version
+    name: bx-cli is installed only once when also listed in modules
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Run with CommandBox specific version
+      - name: Run with with-commandbox and bx-cli in modules
         uses: ./
         with:
           with-commandbox: true
+          modules: "bx-cli bx-mail"
+
+      - name: Verify both CLIs and modules are available
+        run: |
+          boxlang cli version
+          box version
+          test -d "$BOXLANG_HOME/modules/bx-mail"
+
+  test_with_legacy_commandbox_version:
+    runs-on: ubuntu-latest
+    name: BoxLang with specific legacy CommandBox version
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Run with legacy CommandBox specific version
+        uses: ./
+        with:
+          legacy-commandbox: true
           commandbox_version: "6.0.0"
 
       - name: Verify BoxLang installation
         run: boxlang --version
 
-      - name: Verify CommandBox installation
+      - name: Verify legacy CommandBox installation
         run: box version
 
-  test_with_commandbox_modules:
+  test_with_legacy_commandbox_modules:
     runs-on: ubuntu-latest
-    name: BoxLang with CommandBox modules
+    name: BoxLang with legacy CommandBox modules
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Run with CommandBox and modules
+      - name: Run with legacy CommandBox and modules
         uses: ./
         with:
-          with-commandbox: true
+          legacy-commandbox: true
           commandbox_modules: "commandbox-dotenv"
 
       - name: Verify BoxLang installation
         run: boxlang --version
 
-      - name: Verify CommandBox installation
+      - name: Verify legacy CommandBox installation
         run: box version
 
-      - name: Verify CommandBox modules
+      - name: Verify legacy CommandBox modules
         run: box list --system
 
-  test_with_forgebox_api_key:
+  test_with_legacy_commandbox_forgebox_api_key:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    name: CommandBox with ForgeBox API Key on ${{ matrix.os }}
+    name: Legacy CommandBox with ForgeBox API Key on ${{ matrix.os }}
     env:
       EXPECTED_FORGEBOX_API_KEY: "test-api-key-$-quote'"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Run with CommandBox and ForgeBox API Key
+      - name: Run with legacy CommandBox and ForgeBox API Key
         uses: ./
         with:
-          with-commandbox: true
+          legacy-commandbox: true
           forgeboxAPIKey: ${{ env.EXPECTED_FORGEBOX_API_KEY }}
 
       - name: Verify BoxLang installation
         run: boxlang --version
 
-      - name: Verify CommandBox installation
+      - name: Verify legacy CommandBox installation
         run: box version
 
       - name: Verify ForgeBox API Key is configured (Unix/Linux/macOS)
@@ -257,13 +279,32 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         commandbox: ['false', 'true']
+        legacy-commandbox: ['false']
+        modules: ['bx-cli']
         boxlang-home: ['']
         include:
+          - os: ubuntu-latest
+            commandbox: 'true'
+            legacy-commandbox: 'true'
+            modules: 'bx-cli'
+            boxlang-home: ''
+          - os: ubuntu-latest
+            commandbox: 'true'
+            legacy-commandbox: 'false'
+            modules: ''
+            boxlang-home: ''
           - os: windows-latest
             commandbox: 'false'
+            legacy-commandbox: 'false'
+            modules: 'bx-cli'
             boxlang-home: 'C:\boxlang-native-custom'
+          - os: windows-latest
+            commandbox: 'true'
+            legacy-commandbox: 'false'
+            modules: ''
+            boxlang-home: 'C:\boxlang-native-with-commandbox'
     runs-on: ${{ matrix.os }}
-    name: bx-cli ForgeBox API Key on ${{ matrix.os }} (CommandBox=${{ matrix.commandbox }})
+    name: bx-cli ForgeBox API Key on ${{ matrix.os }} (with-commandbox=${{ matrix.commandbox }}, legacy=${{ matrix.legacy-commandbox }}, modules=${{ matrix.modules }})
     env:
       EXPECTED_FORGEBOX_API_KEY: "test-api-key-$-quote'"
     steps:
@@ -273,15 +314,17 @@ jobs:
       - name: Run with bx-cli and ForgeBox API Key
         uses: ./
         with:
-          modules: "bx-cli"
+          modules: ${{ matrix.modules }}
           boxlang-home: ${{ matrix.boxlang-home || '' }}
           with-commandbox: ${{ matrix.commandbox }}
+          legacy-commandbox: ${{ matrix.legacy-commandbox }}
           forgeboxAPIKey: ${{ env.EXPECTED_FORGEBOX_API_KEY }}
 
       - name: Verify bx-cli and its persisted ForgeBox API Key (Unix/Linux/macOS)
         if: runner.os != 'Windows'
         run: |
           boxlang cli version
+          test -d "$BOXLANG_HOME/modules/bx-cli"
           python3 - <<'PY'
           import json, os
           from pathlib import Path
@@ -320,12 +363,12 @@ jobs:
             exit 1
           }
 
-      - name: Verify traditional CommandBox is also installed (Unix/Linux/macOS)
-        if: ${{ matrix.commandbox == 'true' && runner.os != 'Windows' }}
+      - name: Verify legacy CommandBox is also installed (Unix/Linux/macOS)
+        if: ${{ matrix.legacy-commandbox == 'true' && runner.os != 'Windows' }}
         run: /usr/local/bin/box version
 
-      - name: Verify traditional CommandBox is also installed (Windows)
-        if: ${{ matrix.commandbox == 'true' && runner.os == 'Windows' }}
+      - name: Verify legacy CommandBox is also installed (Windows)
+        if: ${{ matrix.legacy-commandbox == 'true' && runner.os == 'Windows' }}
         shell: powershell
         run: |
           & "C:\ProgramData\CommandBox\box.exe" version
@@ -386,12 +429,12 @@ jobs:
 
   test_windows_commandbox:
     runs-on: windows-latest
-    name: BoxLang on Windows - With CommandBox
+    name: BoxLang on Windows - With bx-cli
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      - name: Run with CommandBox
+      - name: Run with bx-cli
         uses: ./
         with:
           with-commandbox: true
@@ -399,7 +442,33 @@ jobs:
       - name: Verify BoxLang installation
         run: boxlang --version
 
-      - name: Verify CommandBox installation
+      - name: Verify bx-cli installation (Windows)
+        shell: powershell
+        run: |
+          boxlang cli version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (!(Test-Path "$env:BOXLANG_HOME\modules\bx-cli" -PathType Container)) {
+            Write-Host "bx-cli module is missing from BOXLANG_HOME"
+            exit 1
+          }
+          Write-Host "bx-cli installed successfully"
+
+  test_windows_legacy_commandbox:
+    runs-on: windows-latest
+    name: BoxLang on Windows - With legacy CommandBox
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Run with legacy CommandBox
+        uses: ./
+        with:
+          legacy-commandbox: true
+
+      - name: Verify BoxLang installation
+        run: boxlang --version
+
+      - name: Verify legacy CommandBox installation
         run: box version
 
   test_custom_boxlang_home:

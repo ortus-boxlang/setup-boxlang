@@ -3,7 +3,7 @@
 Welcome to the `setup-boxlang` GitHub Action codebase! This project provides a composite GitHub Action to install and configure the BoxLang Dynamic JVM Language runtime for CI workflows. Use these guidelines to maximize your productivity as an AI coding agent in this repository.
 
 ## Project Overview
-- **Purpose:** Automate the setup of BoxLang (https://boxlang.io) in GitHub Actions workflows, optionally with CommandBox and custom modules.
+- **Purpose:** Automate the setup of BoxLang (https://boxlang.io) in GitHub Actions workflows, optionally with BoxLang-native CommandBox (`bx-cli`), deprecated standalone CommandBox, and custom modules.
 - **Key Files:**
   - `action.yml`: Main action definition, input/output schema, and composite steps.
   - `README.md`: Usage documentation, input descriptions, and example workflows.
@@ -24,8 +24,9 @@ Welcome to the `setup-boxlang` GitHub Action codebase! This project provides a c
 
 ## Project-Specific Conventions
 - **Inputs:**
-  - `with-commandbox`: Boolean, installs CommandBox if true.
-  - `modules`: Space-delimited list of modules to install.
+  - `with-commandbox`: Boolean, installs the BoxLang-native CommandBox CLI (`bx-cli`) module if true.
+  - `legacy-commandbox`: Boolean, installs the deprecated standalone CommandBox binary if true; `commandbox_version` and `commandbox_modules` apply only here.
+  - `modules`: Space-delimited list of modules to install (listing `bx-cli` here avoids a duplicate install when `with-commandbox` is true).
   - `version`: BoxLang version (default: latest).
 - **Error Handling:**
   - All critical steps exit on failure with clear error messages.
